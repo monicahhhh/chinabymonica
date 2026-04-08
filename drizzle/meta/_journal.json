@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1775313431764,
+      "tag": "0000_lazy_liz_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1775313531526,
+      "tag": "0001_freezing_thor_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775321267021,
+      "tag": "0002_salty_james_howlett",
+      "breakpoints": true
+    }
+  ]
+}

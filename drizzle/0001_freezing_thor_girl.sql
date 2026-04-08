@@ -1,0 +1,21 @@
+CREATE TABLE `articles` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`slug` varchar(256) NOT NULL,
+	`category` enum('global-growth','geopolitical-trends','unicorn-analysis') NOT NULL,
+	`titleZH` text NOT NULL,
+	`titleEN` text NOT NULL,
+	`subtitleZH` text,
+	`subtitleEN` text,
+	`contentZH` text NOT NULL,
+	`contentEN` text NOT NULL,
+	`coverImage` text,
+	`author` varchar(128) NOT NULL DEFAULT 'Monica Wang',
+	`published` boolean NOT NULL DEFAULT false,
+	`featured` boolean NOT NULL DEFAULT false,
+	`sortOrder` int NOT NULL DEFAULT 0,
+	`publishedAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `articles_id` PRIMARY KEY(`id`),
+	CONSTRAINT `articles_slug_unique` UNIQUE(`slug`)
+);
