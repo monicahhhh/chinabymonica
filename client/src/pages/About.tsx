@@ -160,7 +160,7 @@ export default function About() {
                     className="fade-up text-2xl lg:text-3xl font-bold mb-6"
                     style={{ fontFamily: isEN ? "var(--font-display)" : "var(--font-serif-cn)" }}
                   >
-                    {isEN ? "Backed by the Best" : "顶级投资方背书"}
+                    {isEN ? "Backed by the Best" : "顶级投资方"}
                   </h2>
                   <div className="fade-up grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {[
