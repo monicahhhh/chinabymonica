@@ -3,9 +3,10 @@ builder = "nixpacks"
 buildCommand = "pnpm install --frozen-lockfile && pnpm run build"
 
 [deploy]
-# Run DB migrations before the new version goes live (no `generate` — that belongs in dev).
-# Railway accepts at most one array element here — use a single shell string.
-preDeployCommand = "pnpm run db:migrate"
+# Pre-deploy migrate is disabled: it needs DATABASE_URL (+ optional DATABASE_SSL) on this
+# service during deploy; without it, `pnpm run db:migrate` fails and blocks the whole deploy.
+# Schema is already applied — run locally when you add migrations: `pnpm run db:migrate` with .env.
+# To re-enable after wiring Variables: preDeployCommand = "pnpm run db:migrate"
 # Direct node (avoids pnpm/env quirks). PORT must match Railway's healthcheck.
 startCommand = "NODE_OPTIONS=--experimental-global-webcrypto NODE_ENV=production node --import ./dist/crypto-shim.js dist/index.js"
 healthcheckPath = "/api/health"
