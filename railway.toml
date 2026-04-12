@@ -4,7 +4,8 @@ buildCommand = "pnpm install --frozen-lockfile && pnpm run build"
 
 [deploy]
 # Run DB migrations before the new version goes live (no `generate` — that belongs in dev).
-preDeployCommand = ["pnpm", "run", "db:migrate"]
+# Railway accepts at most one array element here — use a single shell string.
+preDeployCommand = "pnpm run db:migrate"
 # Direct node (avoids pnpm/env quirks). PORT must match Railway's healthcheck.
 startCommand = "NODE_OPTIONS=--experimental-global-webcrypto NODE_ENV=production node --import ./dist/crypto-shim.js dist/index.js"
 healthcheckPath = "/api/health"
