@@ -13,4 +13,7 @@ export const ENV = {
   s3Bucket: process.env.S3_BUCKET ?? "",
   s3Region: process.env.S3_REGION ?? "us-east-1",
   s3PublicBaseUrl: process.env.S3_PUBLIC_BASE_URL ?? "", // optional CDN / custom domain
+  /** Optional Manus/Forge-style API (map, notifications, etc.) */
+  forgeApiUrl: process.env.FORGE_API_URL ?? "",
+  forgeApiKey: process.env.FORGE_API_KEY ?? "",
 };

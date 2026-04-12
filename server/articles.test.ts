@@ -72,6 +72,9 @@ function createPublicContext(): TrpcContext {
   };
 }
 
+/** CRUD integration tests need a real MySQL DATABASE_URL */
+const hasDatabase = Boolean(process.env.DATABASE_URL);
+
 describe("article router", () => {
   describe("public procedures", () => {
     it("article.list is accessible without auth", async () => {
@@ -142,7 +145,7 @@ describe("article router", () => {
   });
 
   describe("admin procedures - CRUD operations", () => {
-    it("admin can create and retrieve an article", async () => {
+    it.skipIf(!hasDatabase)("admin can create and retrieve an article", async () => {
       const ctx = createAdminContext();
       const caller = appRouter.createCaller(ctx);
 
@@ -173,7 +176,7 @@ describe("article router", () => {
       await caller.article.delete({ id: createResult.id });
     });
 
-    it("admin can update an article", async () => {
+    it.skipIf(!hasDatabase)("admin can update an article", async () => {
       const ctx = createAdminContext();
       const caller = appRouter.createCaller(ctx);
 
@@ -206,7 +209,7 @@ describe("article router", () => {
       await caller.article.delete({ id: createResult.id });
     });
 
-    it("admin can delete an article", async () => {
+    it.skipIf(!hasDatabase)("admin can delete an article", async () => {
       const ctx = createAdminContext();
       const caller = appRouter.createCaller(ctx);
 

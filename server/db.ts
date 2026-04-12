@@ -1,15 +1,31 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { createPool, type PoolOptions } from "mysql2/promise";
 import { InsertUser, users, articles, InsertArticle, Article } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+
+function createDrizzleFromEnv(): ReturnType<typeof drizzle> | null {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+
+  const opts: PoolOptions = { uri: url };
+  if (process.env.DATABASE_SSL === "true") {
+    opts.ssl = {
+      rejectUnauthorized:
+        process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false",
+    };
+  }
+  // mysql2/promise Pool vs callback pool: types differ; Drizzle accepts both at runtime.
+  return drizzle(createPool(opts)) as unknown as ReturnType<typeof drizzle>;
+}
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = createDrizzleFromEnv();
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -25,8 +41,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
+    throw new Error(
+      "Database not available: set DATABASE_URL and ensure MySQL is reachable"
+    );
   }
 
   try {

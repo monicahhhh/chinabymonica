@@ -3,7 +3,11 @@ builder = "nixpacks"
 buildCommand = "pnpm install --frozen-lockfile && pnpm run build"
 
 [deploy]
-startCommand = "pnpm run db:push && pnpm run start"
+# Run DB migrations before the new version goes live (no `generate` — that belongs in dev).
+preDeployCommand = ["pnpm", "run", "db:migrate"]
+# Direct node (avoids pnpm/env quirks). PORT must match Railway's healthcheck.
+startCommand = "NODE_OPTIONS=--experimental-global-webcrypto NODE_ENV=production node --import ./dist/crypto-shim.js dist/index.js"
 healthcheckPath = "/api/health"
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3

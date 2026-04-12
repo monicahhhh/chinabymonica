@@ -2,19 +2,10 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
-import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
-
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === "string" && value.length > 0;
-
-export type SessionPayload = {
-  openId: string;
-  appId: string;
-  name: string;
-};
+import { signSessionJwtHs256, verifySessionJwtHs256 } from "./sessionJwt";
 
 class SDKServer {
   private parseCookies(cookieHeader: string | undefined) {
@@ -23,27 +14,27 @@ class SDKServer {
     return new Map(Object.entries(parsed));
   }
 
-  private getSessionSecret() {
-    return new TextEncoder().encode(ENV.cookieSecret);
-  }
-
   async createSessionToken(
     openId: string,
     options: { expiresInMs?: number; name?: string } = {}
   ): Promise<string> {
     const issuedAt = Date.now();
     const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
-    const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
-    const secretKey = this.getSessionSecret();
+    const exp = Math.floor((issuedAt + expiresInMs) / 1000);
+    const secret = ENV.cookieSecret;
+    if (!secret) {
+      throw new Error("JWT_SECRET is not configured");
+    }
 
-    return new SignJWT({
-      openId,
-      appId: "chinabymonica",
-      name: options.name ?? "",
-    })
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setExpirationTime(expirationSeconds)
-      .sign(secretKey);
+    return signSessionJwtHs256(
+      {
+        openId,
+        appId: "chinabymonica",
+        name: options.name ?? "",
+        exp,
+      },
+      secret
+    );
   }
 
   async verifySession(
@@ -51,21 +42,10 @@ class SDKServer {
   ): Promise<{ openId: string; appId: string; name: string } | null> {
     if (!cookieValue) return null;
 
-    try {
-      const secretKey = this.getSessionSecret();
-      const { payload } = await jwtVerify(cookieValue, secretKey, {
-        algorithms: ["HS256"],
-      });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+    const secret = ENV.cookieSecret;
+    if (!secret) return null;
 
-      if (!isNonEmptyString(openId) || !isNonEmptyString(appId) || !isNonEmptyString(name)) {
-        return null;
-      }
-
-      return { openId, appId, name };
-    } catch {
-      return null;
-    }
+    return verifySessionJwtHs256(cookieValue, secret);
   }
 
   async authenticateRequest(req: Request): Promise<User> {
@@ -78,7 +58,11 @@ class SDKServer {
     const user = await db.getUserByOpenId(session.openId);
     if (!user) throw ForbiddenError("User not found");
 
-    await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+    try {
+      await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+    } catch (err) {
+      console.warn("[auth] lastSignedIn update skipped:", err);
+    }
 
     return user;
   }

@@ -4,7 +4,16 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, adminProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { listArticles, getArticleBySlug, getArticleById, createArticle, updateArticle, deleteArticle, upsertUser } from "./db";
+import {
+  listArticles,
+  getArticleBySlug,
+  getArticleById,
+  createArticle,
+  updateArticle,
+  deleteArticle,
+  upsertUser,
+  getDb,
+} from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { normalizeArticleHtml } from "./lib/normalizeArticleHtml";
@@ -36,24 +45,62 @@ export const appRouter = router({
     login: publicProcedure
       .input(z.object({ email: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
+        if (!ENV.cookieSecret) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Server misconfiguration: set JWT_SECRET in .env (see .env.example)",
+          });
+        }
         if (!ENV.adminEmail || !ENV.adminPassword) {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Admin credentials not configured" });
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Admin credentials not configured: set ADMIN_EMAIL and ADMIN_PASSWORD in .env",
+          });
         }
         if (input.email !== ENV.adminEmail || input.password !== ENV.adminPassword) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
         }
-        await upsertUser({
-          openId: ENV.adminEmail,
-          name: "Monica Wang",
-          email: ENV.adminEmail,
-          loginMethod: "password",
-          lastSignedIn: new Date(),
-          role: "admin",
-        });
-        const sessionToken = await sdk.createSessionToken(ENV.adminEmail, {
-          name: "Monica Wang",
-          expiresInMs: ONE_YEAR_MS,
-        });
+
+        const database = await getDb();
+        if (!database) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Database not available: set DATABASE_URL in .env, start MySQL, and run pnpm db:migrate",
+          });
+        }
+
+        try {
+          await upsertUser({
+            openId: ENV.adminEmail,
+            name: "Monica Wang",
+            email: ENV.adminEmail,
+            loginMethod: "password",
+            lastSignedIn: new Date(),
+            role: "admin",
+          });
+        } catch (err) {
+          console.error("[auth.login] upsertUser failed:", err);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Could not save admin user to the database. Check DATABASE_URL and migrations.",
+          });
+        }
+
+        let sessionToken: string;
+        try {
+          sessionToken = await sdk.createSessionToken(ENV.adminEmail, {
+            name: "Monica Wang",
+            expiresInMs: ONE_YEAR_MS,
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Session creation failed";
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
+        }
+
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
         return { success: true } as const;

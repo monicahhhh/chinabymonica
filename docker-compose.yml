@@ -1,0 +1,17 @@
+# Local MySQL for chinabymonica — matches DATABASE_URL in .env.local
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: chinabymonica-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: chinabymonica_dev
+      MYSQL_DATABASE: chinabymonica
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pchinabymonica_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
