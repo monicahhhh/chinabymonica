@@ -1,4 +1,4 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { createPool, type PoolOptions } from "mysql2/promise";
 import { InsertUser, users, articles, InsertArticle, Article } from "../drizzle/schema";
@@ -72,9 +72,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
-    } else if (user.openId === ENV.adminEmail) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
     }
 
     if (!values.lastSignedIn) {
@@ -92,6 +89,37 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
   }
+}
+
+export async function upsertEmailLead(input: {
+  email: string;
+  subscribeNewsletter: boolean;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error(
+      "Database not available: set DATABASE_URL and ensure MySQL is reachable"
+    );
+  }
+
+  // Ensure table exists without requiring an immediate schema migration.
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS email_leads (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(320) NOT NULL UNIQUE,
+      subscribeNewsletter BOOLEAN NOT NULL DEFAULT FALSE,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  await db.execute(sql`
+    INSERT INTO email_leads (email, subscribeNewsletter)
+    VALUES (${input.email}, ${input.subscribeNewsletter})
+    ON DUPLICATE KEY UPDATE
+      subscribeNewsletter = VALUES(subscribeNewsletter),
+      updatedAt = CURRENT_TIMESTAMP
+  `);
 }
 
 export async function getUserByOpenId(openId: string) {

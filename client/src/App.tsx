@@ -15,6 +15,7 @@ import AdminArticles from "./pages/AdminArticles";
 import AdminLogin from "./pages/AdminLogin";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import EmailCaptureGate from "./components/EmailCaptureGate";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -63,6 +64,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <ScrollToTop />
+            <EmailCaptureGate />
             <Navbar />
             <main className="min-h-screen">
               <Router />

@@ -12,6 +12,7 @@ import {
   updateArticle,
   deleteArticle,
   upsertUser,
+  upsertEmailLead,
   getDb,
 } from "./db";
 import { storagePut } from "./storage";
@@ -110,6 +111,72 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+    captureEmail: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          subscribeNewsletter: z.boolean().default(false),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        if (!ENV.cookieSecret) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Server misconfiguration: set JWT_SECRET in .env (see .env.example)",
+          });
+        }
+
+        const normalizedEmail = input.email.trim().toLowerCase();
+        const userName = normalizedEmail.split("@")[0];
+
+        const database = await getDb();
+        if (!database) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Database not available: set DATABASE_URL in .env, start MySQL, and run pnpm db:migrate",
+          });
+        }
+
+        try {
+          await upsertUser({
+            openId: normalizedEmail,
+            email: normalizedEmail,
+            name: userName,
+            loginMethod: "email-capture",
+            lastSignedIn: new Date(),
+            role: "user",
+          });
+
+          await upsertEmailLead({
+            email: normalizedEmail,
+            subscribeNewsletter: input.subscribeNewsletter,
+          });
+        } catch (err) {
+          console.error("[auth.captureEmail] persist failed:", err);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Could not save email information",
+          });
+        }
+
+        let sessionToken: string;
+        try {
+          sessionToken = await sdk.createSessionToken(normalizedEmail, {
+            name: userName,
+            expiresInMs: ONE_YEAR_MS,
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Session creation failed";
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
+        }
+
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+        return { success: true } as const;
+      }),
   }),
 
   /** Admin: upload image to S3 */
