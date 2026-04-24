@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DeepSeek-V4 Technical Report · Deep Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=JetBrains+Mono:wght@300;400;500;700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e16;
+  --bg-2:#131823;
+  --bg-3:#1b2230;
+  --paper:#ece3cf;
+  --paper-2:#ddd0b4;
+  --ink:#0a0a0a;
+  --text:#d6d0c3;
+  --text-dim:#868b9a;
+  --muted:#5a6074;
+  --rule:rgba(236,227,207,0.09);
+  --rule-strong:rgba(236,227,207,0.22);
+  --accent:#58e0ff;         /* electric cyan */
+  --accent-2:#ffb347;       /* warm amber */
+  --accent-3:#ff6b89;       /* rose coral */
+  --violet:#a99dff;
+  --serif:"Fraunces",ui-serif,Georgia,serif;
+  --sans:"Instrument Sans",system-ui,"SF Pro Text",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:400;line-height:1.7;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(88,224,255,.08), transparent 60%),
+    radial-gradient(900px 500px at 5% 20%, rgba(255,179,71,.05), transparent 55%),
+    radial-gradient(1000px 600px at 95% 100%, rgba(169,157,255,.05), transparent 60%),
+    var(--bg);
+  overflow-x:hidden;
+}
+::selection{background:var(--accent);color:var(--ink)}
+img{max-width:100%;display:block}
+a{color:inherit}
+
+.grid-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(to right, rgba(236,227,207,0.022) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(236,227,207,0.022) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(1200px 800px at 50% 30%, #000 40%, transparent 80%);
+}
+.grain{
+  position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.06;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.topbar{
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:blur(14px) saturate(1.2);
+  background:rgba(10,14,22,.66);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-inner{max-width:1320px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:28px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+.brand{display:flex;align-items:center;gap:10px;color:var(--paper);font-weight:500}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.nav{display:flex;gap:22px;margin-left:auto;color:var(--text-dim)}
+.nav a{text-decoration:none;position:relative;transition:color .2s}
+.nav a:hover{color:var(--paper)}
+.nav a::before{content:attr(data-n);color:var(--accent);margin-right:6px;font-weight:500}
+.lang{display:flex;gap:6px;color:var(--text-dim)}
+.lang span{padding:2px 7px;border:1px solid var(--rule-strong);border-radius:2px}
+.lang .on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+
+.hero{
+  position:relative;z-index:2;
+  max-width:1320px;margin:0 auto;padding:80px 32px 40px;
+}
+.hero-meta{
+  font-family:var(--mono);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;
+  display:flex;gap:24px;flex-wrap:wrap;align-items:center;
+}
+.hero-meta .sep{color:var(--muted);letter-spacing:0}
+.hero-meta .tag{border:1px solid var(--accent);padding:3px 10px;color:var(--accent);letter-spacing:.2em}
+h1.title{
+  font-family:var(--serif);font-weight:400;font-style:normal;
+  font-variation-settings:"opsz" 144,"SOFT" 30,"WONK" 1;
+  font-size:clamp(54px,9.4vw,136px);line-height:.92;letter-spacing:-.03em;
+  color:var(--paper);margin:0 0 24px;
+}
+h1.title em{
+  font-style:italic;color:var(--accent);
+  font-variation-settings:"opsz" 144,"SOFT" 80,"WONK" 1;
+}
+.sub{
+  font-family:var(--serif);font-style:italic;font-weight:300;
+  font-size:clamp(20px,2.3vw,30px);color:var(--text);max-width:860px;line-height:1.4;margin-bottom:48px;
+}
+.sub span.hl{background:linear-gradient(transparent 60%, rgba(88,224,255,.28) 60%);padding:0 4px;font-style:normal;font-weight:500;color:var(--paper)}
+
+.hero-cite{
+  font-family:var(--mono);font-size:12px;color:var(--text-dim);
+  border-left:2px solid var(--accent);padding:14px 18px;max-width:680px;margin-bottom:64px;
+  background:rgba(88,224,255,.04);
+}
+.hero-cite b{color:var(--paper);font-weight:500}
+
+.stat-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule-strong);
+}
+.stat{
+  padding:28px 24px;border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;
+}
+.stat:last-child{border-right:none}
+.stat .label{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim)}
+.stat .val{font-family:var(--serif);font-weight:300;font-size:54px;line-height:1;color:var(--paper);letter-spacing:-.02em}
+.stat .val em{font-style:italic;color:var(--accent)}
+.stat .val .u{font-size:18px;color:var(--text-dim);margin-left:4px;font-family:var(--mono);font-weight:400}
+.stat .desc{font-size:13px;color:var(--text-dim);line-height:1.5}
+.stat::after{content:"";position:absolute;inset:auto 0 0 0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);transform:scaleX(0);transform-origin:left;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.stat:hover::after{transform:scaleX(1)}
+
+.layout{max-width:1320px;margin:0 auto;padding:96px 32px 40px;display:grid;grid-template-columns:240px 1fr;gap:72px;position:relative;z-index:2}
+.toc{
+  position:sticky;top:96px;align-self:start;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);
+  line-height:1.7;
+}
+.toc h5{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--accent);margin:0 0 18px;font-weight:500}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc}
+.toc ol li{counter-increment:toc;padding:7px 0;border-top:1px solid var(--rule);display:flex;gap:10px;cursor:pointer;transition:color .2s}
+.toc ol li::before{content:counter(toc,decimal-leading-zero);color:var(--muted);font-weight:300;min-width:28px}
+.toc ol li:hover{color:var(--paper)}
+.toc a{text-decoration:none;color:inherit}
+
+main{min-width:0}
+.section{margin-bottom:120px;scroll-margin-top:80px}
+.sec-head{display:grid;grid-template-columns:120px 1fr;gap:32px;align-items:end;margin-bottom:44px;padding-bottom:22px;border-bottom:1px solid var(--rule-strong)}
+.sec-num{
+  font-family:var(--serif);font-weight:300;font-style:italic;
+  font-variation-settings:"opsz" 144,"SOFT" 100,"WONK" 1;
+  font-size:92px;line-height:.9;color:var(--accent);letter-spacing:-.04em;
+}
+.sec-title{
+  font-family:var(--serif);font-weight:400;font-size:42px;line-height:1.05;letter-spacing:-.015em;color:var(--paper);margin:0;
+}
+.sec-title em{font-style:italic;color:var(--accent)}
+.sec-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
+
+.section p{font-size:16.5px;max-width:780px;margin:0 0 18px}
+.section p strong{color:var(--paper);font-weight:600}
+.section h3{font-family:var(--serif);font-weight:500;font-size:26px;color:var(--paper);margin:48px 0 16px;letter-spacing:-.01em}
+.section h3::before{content:"§ ";color:var(--accent);font-family:var(--mono);font-weight:400;font-size:18px;margin-right:6px;vertical-align:2px}
+.section h4{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:28px 0 10px}
+
+.section ul{max-width:780px;padding-left:0;list-style:none}
+.section ul li{position:relative;padding-left:22px;margin-bottom:8px;font-size:16px}
+.section ul li::before{content:"▸";color:var(--accent);position:absolute;left:0;top:4px;font-size:12px}
+
+.paper-panel{
+  background:var(--paper);color:var(--ink);padding:36px 40px;margin:32px 0;border-radius:2px;
+  position:relative;box-shadow:0 24px 60px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
+  font-family:var(--serif);
+}
+.paper-panel::before{
+  content:"";position:absolute;left:-8px;top:18px;bottom:18px;width:3px;background:var(--accent-2);
+}
+.paper-panel .stamp{
+  position:absolute;top:20px;right:28px;font-family:var(--mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--accent-2);
+  border:1px solid var(--accent-2);padding:3px 10px;
+}
+.paper-panel h4{font-family:var(--mono);color:var(--accent-2);font-size:11px;margin-top:0;letter-spacing:.22em}
+.paper-panel p{color:var(--ink);font-size:18px;line-height:1.55;font-family:var(--serif);max-width:none}
+
+.formula{
+  font-family:var(--mono);font-size:13.5px;color:var(--accent);
+  background:var(--bg-2);border:1px solid var(--rule);padding:18px 22px;margin:16px 0;
+  border-left:3px solid var(--accent);
+  overflow-x:auto;white-space:pre;
+}
+
+.data{
+  width:100%;border-collapse:collapse;margin:20px 0 28px;font-family:var(--mono);font-size:13px;
+  border:1px solid var(--rule-strong);
+}
+.data thead th{
+  background:var(--bg-3);color:var(--paper);font-weight:500;text-align:left;padding:12px 14px;border-bottom:1px solid var(--rule-strong);
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+}
+.data thead th:not(:first-child){text-align:right}
+.data tbody td{padding:11px 14px;border-top:1px solid var(--rule);color:var(--text)}
+.data tbody td:not(:first-child){text-align:right}
+.data tbody td:first-child{color:var(--paper);font-weight:400}
+.data tbody tr:hover{background:rgba(88,224,255,.04)}
+.data td .best{color:var(--accent);font-weight:700}
+.data td .ours{color:var(--accent-2);font-weight:700}
+.data caption{caption-side:bottom;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;padding-top:8px;text-transform:uppercase}
+
+.pull{
+  font-family:var(--serif);font-style:italic;font-weight:300;
+  font-variation-settings:"opsz" 144,"SOFT" 60,"WONK" 1;
+  font-size:32px;line-height:1.28;color:var(--paper);max-width:820px;
+  border-top:1px solid var(--accent);border-bottom:1px solid var(--accent);
+  padding:28px 0;margin:40px 0;letter-spacing:-.01em;
+}
+.pull::before{content:"“";color:var(--accent);font-size:1.4em;line-height:0;vertical-align:-.1em;margin-right:6px}
+.pull::after{content:"”";color:var(--accent);font-size:1.4em;line-height:0;vertical-align:-.35em;margin-left:4px}
+
+.note-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:24px 0}
+.note{border:1px solid var(--rule-strong);padding:24px;background:var(--bg-2);position:relative;overflow:hidden}
+.note::before{content:attr(data-tag);position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--accent);border:1px solid var(--accent);padding:2px 8px;text-transform:uppercase}
+.note h5{font-family:var(--serif);font-weight:500;font-size:20px;color:var(--paper);margin:0 0 10px;letter-spacing:-.01em;padding-right:80px}
+.note p{font-size:14.5px;color:var(--text);margin:0 0 10px;max-width:none}
+.note p:last-child{margin-bottom:0}
+.note.accent{border-color:var(--accent);background:linear-gradient(180deg, rgba(88,224,255,.06), transparent)}
+.note.warn::before{color:var(--accent-2);border-color:var(--accent-2)}
+.note.warn{border-color:rgba(255,179,71,.3)}
+
+.bars{display:flex;flex-direction:column;gap:8px;margin:24px 0;font-family:var(--mono);font-size:12px}
+.bar{display:grid;grid-template-columns:200px 1fr 60px;gap:14px;align-items:center}
+.bar .name{color:var(--text-dim)}
+.bar .track{height:20px;background:var(--bg-2);border:1px solid var(--rule);position:relative;overflow:hidden}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--accent),rgba(88,224,255,.2));animation:grow 1.4s cubic-bezier(.2,.8,.2,1) both}
+.bar.neg .fill{background:linear-gradient(90deg,var(--accent-2),rgba(255,179,71,.2))}
+.bar .pct{color:var(--paper);text-align:right;font-weight:500}
+@keyframes grow{from{transform:scaleX(0);transform-origin:left}}
+
+.flow{margin:32px 0;font-family:var(--mono);font-size:13px;color:var(--text)}
+.flow .node{
+  display:inline-block;padding:10px 18px;border:1px solid var(--accent);color:var(--accent);
+  margin:4px 0;position:relative;background:rgba(88,224,255,.05)
+}
+.flow .node.fill{background:var(--accent);color:var(--ink);font-weight:600}
+.flow .arrow{display:block;padding-left:40px;color:var(--muted);margin:4px 0;font-size:11px}
+.flow .arrow::before{content:"↓";margin-right:8px;color:var(--accent)}
+
+.appendix{
+  background:var(--paper);color:var(--ink);padding:56px 48px;margin:96px 0 0;
+  border-top:6px solid var(--accent-2);
+  position:relative;
+}
+.appendix::before{
+  content:"APPENDIX ⁄ QUICK REFERENCE";position:absolute;top:20px;right:40px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--accent-2);
+}
+.appendix h2{font-family:var(--serif);font-weight:500;font-size:48px;margin:0 0 32px;color:var(--ink);letter-spacing:-.02em}
+.appendix h2 em{font-style:italic;color:var(--accent-2)}
+.appendix .big-table{
+  width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;
+  border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+}
+.appendix .big-table tr{border-bottom:1px solid rgba(10,10,10,.12)}
+.appendix .big-table td{padding:11px 14px}
+.appendix .big-table td:first-child{color:rgba(10,10,10,.68);width:58%}
+.appendix .big-table td:last-child{text-align:right;color:var(--ink);font-weight:500}
+.appendix .big-table td .hl{background:var(--accent);color:var(--ink);padding:1px 6px}
+
+footer{
+  background:var(--bg);padding:80px 32px 60px;border-top:1px solid var(--rule);
+  position:relative;z-index:2;
+}
+.foot-inner{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;align-items:start}
+.foot-mark{font-family:var(--serif);font-weight:300;font-style:italic;font-size:44px;color:var(--paper);line-height:1.1;letter-spacing:-.02em;max-width:620px}
+.foot-mark em{color:var(--accent);font-style:italic}
+.foot-meta{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;line-height:1.9;text-transform:uppercase}
+.foot-meta b{color:var(--paper);font-weight:500}
+
+@media (max-width: 1000px){
+  .layout{grid-template-columns:1fr;gap:32px;padding:56px 24px}
+  .toc{position:static}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .stat{border-right:none;border-top:1px solid var(--rule)}
+  .sec-head{grid-template-columns:1fr;gap:12px}
+  .sec-num{font-size:64px}
+  .note-grid{grid-template-columns:1fr}
+  .nav{display:none}
+  .hero{padding:48px 24px 24px}
+  .bar{grid-template-columns:120px 1fr 50px;font-size:11px}
+  .foot-inner{grid-template-columns:1fr}
+  .appendix{padding:36px 24px}
+  .topbar-inner{padding:12px 24px}
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="grain"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="dot"></span>DS-V4 / DOSSIER №04·EN</div>
+    <div class="nav">
+      <a href="#s1" data-n="01">Positioning</a>
+      <a href="#s3" data-n="03">Innovations</a>
+      <a href="#s6" data-n="06">Post-Training</a>
+      <a href="#s7" data-n="07">Benchmarks</a>
+      <a href="#s8" data-n="08">Takeaways</a>
+    </div>
+    <div class="lang"><span>ZH</span><span class="on">EN</span></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-meta">
+    <span class="tag">DEEP DIVE</span>
+    <span>Technical Report · Preview</span>
+    <span class="sep">/</span>
+    <span>58 pages</span>
+    <span class="sep">/</span>
+    <span>2026 · Vol 04</span>
+  </div>
+
+  <h1 class="title">An <em>efficiency</em><br/>revolution at 1M tokens.</h1>
+
+  <p class="sub">
+    DeepSeek-V4 rewrites the last two years of <em>"stronger reasoning × bigger scale"</em> into a different fight:
+    <span class="hl">how much does a single token actually cost?</span> — and what it takes to make million-token context genuinely trainable, deployable, and usable.
+  </p>
+
+  <div class="hero-cite">
+    Source: <b>DeepSeek-V4 — Towards Highly Efficient Million-Token Context Intelligence</b><br/>
+    Authors: DeepSeek-AI · research@deepseek.com<br/>
+    Weights: huggingface.co/collections/deepseek-ai/deepseek-v4
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="label">V4-Pro · 1M FLOPs</div>
+      <div class="val"><em>27</em><span class="u">%</span></div>
+      <div class="desc">single-token inference vs. V3.2</div>
+    </div>
+    <div class="stat">
+      <div class="label">V4-Flash · 1M FLOPs</div>
+      <div class="val"><em>10</em><span class="u">%</span></div>
+      <div class="desc">a 10× efficient lightweight flagship</div>
+    </div>
+    <div class="stat">
+      <div class="label">KV Cache vs V3.2</div>
+      <div class="val"><em>7</em><span class="u">%</span></div>
+      <div class="desc">V4-Flash at million-token context</div>
+    </div>
+    <div class="stat">
+      <div class="label">vs BF16 GQA8 baseline</div>
+      <div class="val"><em>2</em><span class="u">%</span></div>
+      <div class="desc">compression × sparsity × low precision</div>
+    </div>
+  </div>
+</section>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- TOC -->
+  <aside class="toc">
+    <h5>Contents</h5>
+    <ol>
+      <li><a href="#s1">Core Positioning</a></li>
+      <li><a href="#s2">Two Flagships</a></li>
+      <li><a href="#s3">Four Innovations</a></li>
+      <li><a href="#s4">Infrastructure</a></li>
+      <li><a href="#s5">Pre-training &amp; Stability</a></li>
+      <li><a href="#s6">Post-training</a></li>
+      <li><a href="#s7">Benchmarks</a></li>
+      <li><a href="#s8">Four Takeaways</a></li>
+      <li><a href="#s9">Limitations</a></li>
+      <li><a href="#s10">For Practitioners</a></li>
+    </ol>
+  </aside>
+
+  <main>
+
+  <!-- SECTION 1 -->
+  <section class="section" id="s1">
+    <div class="sec-head">
+      <div class="sec-num">01</div>
+      <div>
+        <div class="sec-kicker">Positioning · Direction</div>
+        <h2 class="sec-title">Efficiency makes million-token context <em>real</em></h2>
+      </div>
+    </div>
+    <p>If V4 had to be summarized in a single word, it would be <strong>efficiency</strong>. Where competitors chased "stronger reasoning" and "bigger scale," V4 confronts the most fundamental bottleneck of Transformers — quadratic attention complexity — head-on.</p>
+    <p>Despite having <em>more activated parameters</em>, V4-Pro uses <strong>3.7× less compute and 9.5× less KV cache</strong> than V3.2 at 1M tokens. V4-Flash pushes KV cache to roughly <strong>1/14</strong>. These are not incremental optimizations; they are an architectural rewrite.</p>
+
+    <div class="bars">
+      <div class="bar neg"><span class="name">V4-Pro FLOPs</span><span class="track"><span class="fill" style="width:27%"></span></span><span class="pct">27%</span></div>
+      <div class="bar neg"><span class="name">V4-Flash FLOPs</span><span class="track"><span class="fill" style="width:10%"></span></span><span class="pct">10%</span></div>
+      <div class="bar neg"><span class="name">V4-Pro KV</span><span class="track"><span class="fill" style="width:10%"></span></span><span class="pct">10%</span></div>
+      <div class="bar neg"><span class="name">V4-Flash KV</span><span class="track"><span class="fill" style="width:7%"></span></span><span class="pct">7%</span></div>
+      <div class="bar neg"><span class="name">vs GQA8 BF16</span><span class="track"><span class="fill" style="width:2%"></span></span><span class="pct">~2%</span></div>
+    </div>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em">* Percentages relative to V3.2 / BF16 GQA8 baseline — shorter is better.</p>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section class="section" id="s2">
+    <div class="sec-head">
+      <div class="sec-num">02</div>
+      <div>
+        <div class="sec-kicker">Dual Flagships</div>
+        <h2 class="sec-title">Same architecture, <em>two scales</em></h2>
+      </div>
+    </div>
+
+    <table class="data">
+      <thead>
+        <tr><th>Model</th><th>Total</th><th>Act.</th><th>Layers</th><th>Hidden</th><th>Experts</th><th>Act/token</th><th>Train tokens</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>V4-Pro</td><td>1.6T</td><td>49B</td><td>61</td><td>7168</td><td>384</td><td>6</td><td>33T</td></tr>
+        <tr><td>V4-Flash</td><td>284B</td><td>13B</td><td>43</td><td>4096</td><td>256</td><td>6</td><td>32T</td></tr>
+      </tbody>
+      <caption>Both models natively support 1M-token context and ship with Non-think / Think High / Think Max reasoning modes.</caption>
+    </table>
+
+    <div class="note-grid">
+      <div class="note accent" data-tag="Pro-Max">
+        <h5>The open-source flagship</h5>
+        <p>1.6T × 49B activated × 61-layer deep stack. Targets Opus-4.6 / GPT-5.4 / Gemini-3.1-Pro and already leads open-source on Codeforces, LiveCodeBench, and Apex Shortlist.</p>
+      </div>
+      <div class="note" data-tag="Flash-Max">
+        <h5>Cost-efficient inference</h5>
+        <p>284B / 13B activated — matches V3.2 capability at 1/3 the activation cost. FP8 storage + on-disk KV cache collapses deployment economics.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section class="section" id="s3">
+    <div class="sec-head">
+      <div class="sec-num">03</div>
+      <div>
+        <div class="sec-kicker">Four Core Innovations</div>
+        <h2 class="sec-title">Four <em>engines</em> of the efficiency revolution</h2>
+      </div>
+    </div>
+
+    <h3>3.1 &nbsp;Hybrid Attention · Interleaved CSA + HCA</h3>
+    <p>The heart of the paper. V4 designs <strong>two complementary attention mechanisms</strong> and then <strong>interleaves them per layer</strong>, rather than picking one.</p>
+
+    <h4>CSA · Compressed Sparse Attention — "compress first, then sparsify"</h4>
+    <ul>
+      <li><strong>Compression stage</strong>: every m=4 tokens are collapsed into a single KV entry via a dual-stream Cₐ/Cᵦ formulation with overlapped windows, learnable positional biases, and a row-wise softmax over 2m weights. Not mean pooling — a <em>learnable, position-aware KV summary</em>.</li>
+      <li><strong>Sparse stage</strong>: DSA applied on the compressed sequence via a Lightning Indexer (low-rank queries + ReLU similarity + top-k). Each query attends only to its top-k compressed blocks.</li>
+      <li><strong>Sliding-window patch</strong>: parallel SWA branch (n_win=128) preserves strict local dependencies that compression + sparsity might lose.</li>
+      <li><strong>Attention Sink</strong>: learnable per-head sink logit lets heads <em>abstain</em> (total attention &lt; 1) — an old StreamingLLM trick that still pays off.</li>
+    </ul>
+
+    <h4>HCA · Heavily Compressed Attention — "extreme compression + dense attention"</h4>
+    <p>If CSA is moderate compression (m=4), HCA is extreme: <strong>m′=128</strong> — 128 tokens of KV collapsed into a single entry. The resulting sequence is already tiny, so HCA skips sparsification and runs <strong>full dense attention</strong>. Simpler (no indexer, no top-k) but dramatic compression.</p>
+
+    <div class="pull">The near-field view of CSA, plus the global glance of HCA — every layer sees the whole context.</div>
+
+    <h4>Three-tier precision strategy</h4>
+    <div class="formula">RoPE dims ………… BF16    (position info is precision-sensitive)
+KV (other dims) … FP8     (halves cache vs BF16)
+Indexer QK ……… FP4     (top-k doesn't need precision)</div>
+    <p>Combined with CSA/HCA length compression, total KV cache shrinks to <strong>~2%</strong> of a BF16 GQA8 baseline. That's why million-token context becomes routine rather than aspirational.</p>
+
+    <h3>3.2 &nbsp;mHC · Manifold-Constrained Hyper-Connections</h3>
+    <p>Hyper-Connections expand the residual stream from ℝᵈ to ℝ^(n_hc × d) via three linear maps — more expressive, but numerically unstable when stacked deep. V4's fix: <strong>constrain B_l to the Birkhoff polytope of doubly stochastic matrices</strong>.</p>
+
+    <div class="formula">B_l ∈ M := { M ∈ ℝ^{n×n} | M·1_n = 1_n,  1_n^T·M = 1_n^T,  M ≥ 0 }</div>
+
+    <ul>
+      <li><strong>‖B_l‖₂ ≤ 1</strong> → the map is non-expansive; signals cannot amplify in either direction → numerical stability.</li>
+      <li><strong>M is closed under multiplication</strong> → stability composes across deep stacks.</li>
+      <li>Projection via <strong>20 Sinkhorn-Knopp iterations</strong> (exp → alternating row/column normalization).</li>
+      <li>A_l, C_l clamped via sigmoid to non-negative bounded values — no signal cancellation.</li>
+    </ul>
+
+    <div class="paper-panel">
+      <div class="stamp">Why it matters</div>
+      <h4>RESIDUAL UPGRADE FOR DEEP NETS</h4>
+      <p>mHC gives anyone training 100+ layer models a theoretically grounded, operationally usable residual upgrade. Engineering cost — added activation memory + pipeline comm — is hidden by fused kernels, tensor-level recomputation, and DualPipe 1F1B overlap, landing at just <b>6.7%</b> wall-clock overhead.</p>
+    </div>
+
+    <h3>3.3 &nbsp;Muon · A Widespread Replacement for AdamW</h3>
+    <p>V4 migrates the <strong>vast majority of parameters</strong> from AdamW to Muon, keeping AdamW only for embeddings, the LM head, RMSNorm weights, and mHC's static biases and gates.</p>
+
+    <div class="flow">
+      <span class="node">accumulate momentum M_t</span>
+      <div class="arrow">Nesterov correction + hybrid Newton–Schulz</div>
+      <span class="node">approximate orthogonalization (σ → 1)</span>
+      <div class="arrow">rescale update RMS by √max(n,m)·γ</div>
+      <span class="node fill">share hyperparameters with AdamW · WD + update</span>
+    </div>
+
+    <div class="note-grid">
+      <div class="note" data-tag="Mixed N-S">
+        <h5>Hybrid Newton-Schulz</h5>
+        <p>First 8 steps use aggressive coefficients (3.4445, −4.7750, 2.0315) for fast convergence. Final 2 steps switch to conservative (2, −1.5, 0.5), pinning singular values precisely at 1. Fast <em>and</em> stable.</p>
+      </div>
+      <div class="note" data-tag="ZeRO × Muon">
+        <h5>Reconciling ZeRO with Muon</h5>
+        <p>Muon needs full gradient matrices — conflicts with ZeRO. V4 uses a <strong>knapsack-based bucket assignment + flattened MoE distribution + BF16 stochastic-rounded gradient sync + all-to-all + FP32 local reduction</strong>. &lt;10% memory overhead, comm volume halved.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:24px">Payoff: <strong>faster convergence + greater stability</strong>. QK-Clip is no longer needed — the attention architecture lets RMSNorm directly control Q/K scales.</p>
+
+    <h3>3.4 &nbsp;DeepSeekMoE Continuation + Hash Routing Early Layers</h3>
+    <ul>
+      <li>Affinity function: <strong>Sigmoid → Sqrt(Softplus(·))</strong> — empirically more stable.</li>
+      <li><strong>Removed cap on routing target nodes</strong>; parallelism strategy redesigned to compensate.</li>
+      <li>First <strong>3 MoE layers use Hash Routing</strong> — experts deterministically assigned by hashing token ID. Avoids shallow-layer instability before routing has learned anything meaningful.</li>
+      <li>MTP depth = 1, unchanged from V3.</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section class="section" id="s4">
+    <div class="sec-head">
+      <div class="sec-num">04</div>
+      <div>
+        <div class="sec-kicker">Infrastructure</div>
+        <h2 class="sec-title">Making 1M training <em>actually possible</em></h2>
+      </div>
+    </div>
+    <p>Arguably the most impressive part of the paper — DeepSeek showcasing its full-stack model-engineering capability.</p>
+
+    <div class="note-grid">
+      <div class="note" data-tag="1.92×"><h5>Fine-grained MoE overlap</h5><p>MoE split into 3 expert waves; each wave's comm hidden behind the previous wave's compute. Theoretical speedup 1.92× (vs Comet 1.42×), tolerates lower interconnect bandwidth.</p></div>
+      <div class="note" data-tag="DSL"><h5>TileLang</h5><p>Custom domain-specific language balancing dev productivity and runtime — replaces hand-written CUDA.</p></div>
+      <div class="note" data-tag="bitwise"><h5>Batch-Invariant deterministic kernels</h5><p>Bitwise reproducibility across training, inference, and RL rollout — critical for on-policy algorithms.</p></div>
+      <div class="note" data-tag="FP4 QAT"><h5>FP4 quantization-aware training</h5><p>MoE expert weights + indexer QK use FP4. RL rollout uses real FP4 weights — sampling-time behavior exactly matches deployment.</p></div>
+      <div class="note" data-tag="TorchFX"><h5>Tensor-level checkpointing</h5><p>Annotate a few tensors; framework traces the graph via TorchFX, finds the minimal subgraph for recomputation, dedups shared storage. Zero overhead, full convenience.</p></div>
+      <div class="note" data-tag="2-stage CP"><h5>Contextual Parallelism (two-stage)</h5><p>① Each rank sends its last m uncompressed KV entries to rank i+1. ② Rank i+1 compresses with local data → all-gather → fused select-and-pad kernel reassembles.</p></div>
+      <div class="note accent" data-tag="Heterogeneous"><h5>Heterogeneous KV cache × on-disk storage</h5><p>Full Caching / Periodic Checkpointing / Zero Caching — operators trade storage for compute. <strong>Key enabler of commercial million-token deployment</strong>, especially for shared-prefix reuse (multi-turn, agent frameworks).</p></div>
+      <div class="note" data-tag="DSec"><h5>DSec production-grade sandbox</h5><p>Rust on 3FS. Four substrates (Function Call / Container / microVM / fullVM) under one Python SDK. Hundreds of thousands of concurrent sandboxes per cluster; preemption-safe resume via trajectory logs.</p></div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section class="section" id="s5">
+    <div class="sec-head">
+      <div class="sec-num">05</div>
+      <div>
+        <div class="sec-kicker">Pre-training &amp; Stability</div>
+        <h2 class="sec-title">Two practical <em>stability recipes</em></h2>
+      </div>
+    </div>
+
+    <h3>Data &amp; training setup</h3>
+    <ul>
+      <li><strong>32T+ tokens</strong> of curated multilingual corpus: filters for batch-generated content, upweighted long documents, expanded long-tail languages, agentic data injected mid-training.</li>
+      <li>Sequence length: 4K → 16K → 64K → 1M. First 1T tokens dense-attention warmup; sparse attention introduced at 64K.</li>
+      <li>Batch peak: 75.5M (Flash) / 94.4M (Pro). Peak LR: 2.7e-4 / 2.0e-4, cosine decay to 1/10.</li>
+      <li>Auxiliary-loss-free balancing + small sequence-wise balance loss; MTP weight 0.3 → 0.1 during decay.</li>
+    </ul>
+
+    <h3>Two fixes for loss spikes</h3>
+    <p>The authors candidly report frequent spikes during trillion-parameter MoE training. Root cause: <strong>MoE-layer outliers amplified by the routing mechanism</strong>.</p>
+
+    <div class="note-grid">
+      <div class="note accent" data-tag="Routing">
+        <h5>Anticipatory Routing</h5>
+        <p>Decouple <strong>feature computation</strong> from <strong>routing decisions</strong>: at step t, use θ_t for features but θ_{t−Δt} for routing indices (precomputed, cached). Breaks the "feature → outlier → routing → more outliers" cycle.</p>
+        <p>Auto-detect spikes, activate temporarily, deactivate on recovery → negligible overall overhead.</p>
+      </div>
+      <div class="note accent" data-tag="Clamp">
+        <h5>SwiGLU Clamping</h5>
+        <p>Clamp linear component to [−10, 10]; cap gate at 10. <strong>Simple, nearly free, empirically eliminates outliers.</strong></p>
+      </div>
+    </div>
+
+    <div class="paper-panel">
+      <div class="stamp">Candor</div>
+      <h4>"IT WORKS, WE DON'T FULLY KNOW WHY"</h4>
+      <p>The paper openly states the theoretical mechanism of both techniques remains insufficiently understood, and invites community research. That candor is refreshing in today's over-polished technical reports.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section class="section" id="s6">
+    <div class="sec-head">
+      <div class="sec-num">06</div>
+      <div>
+        <div class="sec-kicker">Post-Training Paradigm</div>
+        <h2 class="sec-title">Specialist <em>×</em> On-Policy Distillation</h2>
+      </div>
+    </div>
+    <p>The biggest methodological shift in V4: <strong>OPD replaces mixed RL</strong> in the merging phase.</p>
+
+    <div class="flow">
+      <span class="node fill">Base Model</span>
+      <div class="arrow">SFT on high-quality, domain-specific data</div>
+      <span class="node">GRPO RL per domain · math / code / agent / instruction-following</span>
+      <div class="arrow">Multi-Teacher On-Policy Distillation (reverse KL)</div>
+      <span class="node fill">Unified Final Model</span>
+    </div>
+
+    <ul>
+      <li>Truly on-policy — no distillation distribution shift</li>
+      <li>Avoids cross-task interference endemic to multi-task RL merging</li>
+      <li>Training loop batches teacher inference &amp; shares KV cache → huge compute savings</li>
+    </ul>
+
+    <h3>Generative Reward Model (GRM)</h3>
+    <p>V4 abandons scalar reward models entirely. The <strong>actor network itself serves as the reward model</strong>, trained on rubric-guided RL data. Judging skill and generation skill are optimized <em>jointly</em>. Human annotation budget drops dramatically.</p>
+
+    <h3>Three reasoning effort modes</h3>
+    <table class="data">
+      <thead><tr><th>Mode</th><th style="text-align:left">Typical use</th><th style="text-align:left">Format</th></tr></thead>
+      <tbody>
+        <tr><td>Non-think</td><td style="text-align:left">Routine Q&amp;A · low-risk decisions</td><td style="text-align:left"><code>&lt;/think&gt;</code> summary (empty think)</td></tr>
+        <tr><td>Think High</td><td style="text-align:left">Complex problems · planning</td><td style="text-align:left"><code>&lt;think&gt;…&lt;/think&gt;</code> summary</td></tr>
+        <tr><td>Think Max</td><td style="text-align:left">Reasoning frontier</td><td style="text-align:left">Special system prompt + think</td></tr>
+      </tbody>
+    </table>
+
+    <div class="pull">Absolute maximum with no shortcuts permitted. You MUST be very thorough in your thinking…</div>
+
+    <h3>More post-training details</h3>
+    <ul>
+      <li><strong>Tool-Call · XML with |DSML| special tokens</strong>: replaces JSON; eliminates escaping failures; integrates cleanly with interleaved <code>&lt;think&gt;</code>.</li>
+      <li><strong>Interleaved Thinking</strong>: V4 preserves the <em>entire</em> reasoning history across turns in tool-calling scenarios (even across user-message boundaries). This is what makes 1M context <em>useful</em> for long-horizon agents.</li>
+      <li><strong>Quick Instruction</strong>: auxiliary tasks (web search trigger, intent recognition) handled by appending dedicated special tokens, reusing existing KV cache — significantly lowers TTFT.</li>
+      <li><strong>WAL + persistent KV cache</strong>: preempted rollouts resume at the token level. Regenerating from scratch would introduce a <em>length bias</em> — shorter outputs survive interruption more often — biasing the model toward shorter responses. Hence the insistence on true resumption.</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 7 -->
+  <section class="section" id="s7">
+    <div class="sec-head">
+      <div class="sec-num">07</div>
+      <div>
+        <div class="sec-kicker">Benchmarks</div>
+        <h2 class="sec-title">One table shows <em>where V4 stands</em></h2>
+      </div>
+    </div>
+
+    <h3>Base model comparison</h3>
+    <table class="data">
+      <thead>
+        <tr><th>Benchmark</th><th>V3.2-Base (37B)</th><th>V4-Flash-Base (13B)</th><th>V4-Pro-Base (49B)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>MMLU-Pro</td><td>65.5</td><td>68.3</td><td><span class="best">73.5</span></td></tr>
+        <tr><td>Simple-QA Verified</td><td>28.3</td><td>30.1</td><td><span class="best">55.2</span></td></tr>
+        <tr><td>FACTS Parametric</td><td>27.1</td><td>33.9</td><td><span class="best">62.6</span></td></tr>
+        <tr><td>HumanEval</td><td>62.8</td><td>69.5</td><td><span class="best">76.8</span></td></tr>
+        <tr><td>MATH</td><td>60.5</td><td>57.4</td><td><span class="best">64.5</span></td></tr>
+        <tr><td>LongBench-V2</td><td>40.2</td><td>44.7</td><td><span class="best">51.5</span></td></tr>
+      </tbody>
+      <caption>Flash-Base at 13B activated already matches V3.2-Base at 37B — the same capability for 1/3 the activation cost.</caption>
+    </table>
+
+    <h3>V4-Pro-Max vs. global frontier</h3>
+    <table class="data">
+      <thead>
+        <tr><th>Benchmark</th><th>Opus-4.6</th><th>GPT-5.4</th><th>Gemini-3.1-Pro</th><th>V4-Pro-Max</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SimpleQA-Verified</td><td>46.2</td><td>45.3</td><td><span class="best">75.6</span></td><td><span class="ours">57.9</span></td></tr>
+        <tr><td>Chinese-SimpleQA</td><td>76.4</td><td>76.8</td><td><span class="best">85.9</span></td><td><span class="ours">84.4</span></td></tr>
+        <tr><td>LiveCodeBench</td><td>88.8</td><td>—</td><td>91.7</td><td><span class="best">93.5</span></td></tr>
+        <tr><td>Codeforces Rating</td><td>—</td><td>3168</td><td>3052</td><td><span class="best">3206</span></td></tr>
+        <tr><td>HMMT 2026 Feb</td><td>96.2</td><td><span class="best">97.7</span></td><td>94.7</td><td>95.2</td></tr>
+        <tr><td>IMO Answer Bench</td><td>75.3</td><td><span class="best">91.4</span></td><td>81.0</td><td>89.8</td></tr>
+        <tr><td>Apex Shortlist</td><td>85.9</td><td>78.1</td><td>89.1</td><td><span class="best">90.2</span></td></tr>
+        <tr><td>MRCR 1M</td><td><span class="best">92.9</span></td><td>—</td><td>76.3</td><td>83.5</td></tr>
+        <tr><td>CorpusQA 1M</td><td><span class="best">71.7</span></td><td>—</td><td>53.8</td><td>62.0</td></tr>
+        <tr><td>SWE Verified</td><td><span class="best">80.8</span></td><td>—</td><td>80.6</td><td>80.6</td></tr>
+        <tr><td>Terminal Bench 2.0</td><td>65.4</td><td><span class="best">75.1</span></td><td>68.5</td><td>67.9</td></tr>
+      </tbody>
+      <caption>Cyan = row best · Amber = V4-Pro-Max score</caption>
+    </table>
+
+    <div class="note-grid">
+      <div class="note accent" data-tag="Open SOTA"><h5>Open-source leader</h5><p>Tops SimpleQA-Verified, LiveCodeBench, Codeforces, Apex Shortlist among open models. Codeforces 3206 ≈ <strong>~rank 23 among human competitors</strong>.</p></div>
+      <div class="note" data-tag="The Gap"><h5>What's still missing</h5><p>Trails Gemini-3.1-Pro on SimpleQA-Verified by ~18 pts. The remaining gap is <strong>knowledge breadth</strong>, not reasoning.</p></div>
+      <div class="note" data-tag="Long-ctx"><h5>Long context</h5><p>Beats Gemini-3.1-Pro on MRCR &amp; CorpusQA; loses to Claude Opus 4.6.</p></div>
+      <div class="note" data-tag="Math"><h5>Formal math</h5><p><strong>Putnam-2025: 120/120 perfect score</strong>, tied with Axiom for first place.</p></div>
+    </div>
+
+    <h3>Real-world evaluations</h3>
+    <ul>
+      <li><strong>Chinese writing</strong>: vs Gemini-3.1-Pro — <strong>62.7%</strong> win rate on functional writing, <strong>77.5%</strong> on creative quality.</li>
+      <li><strong>White-collar tasks</strong> (30 expert-curated tasks across 13 industries, blind human eval): <strong>63%</strong> non-loss rate vs. Opus-4.6-Max.</li>
+      <li><strong>Internal R&amp;D coding</strong> (30 real engineering tasks): V4-Pro-Max 67% · Opus 4.5 Thinking 73% · Opus 4.6 Thinking <strong>80%</strong>.</li>
+      <li><strong>Internal 85-engineer survey</strong>: <span style="color:var(--accent);font-weight:600">52%</span> would make V4-Pro their daily default coding model, 39% lean yes, &lt;9% no.</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 8 -->
+  <section class="section" id="s8">
+    <div class="sec-head">
+      <div class="sec-num">08</div>
+      <div>
+        <div class="sec-kicker">Four Deep Takeaways</div>
+        <h2 class="sec-title">Four <em>deeper</em> reads</h2>
+      </div>
+    </div>
+
+    <h3>① From "parameter efficiency" to "system efficiency"</h3>
+    <p>V3's banner was <strong>activated parameters</strong> (MoE + MLA). V4's banner is <strong>context energy efficiency</strong> — FLOPs per token, KV cache per token. In the reasoning-model era, long CoTs / long tool traces / long document analyses shift compute from the <em>parameter axis</em> to the <em>sequence axis</em>. V4 is a direct response.</p>
+
+    <h3>② The 3–6-month frontier gap has changed nature</h3>
+    <p>On <strong>hard reasoning</strong> (HMMT, IMO, Codeforces, LiveCodeBench), V4-Pro-Max is effectively on par or ahead of Gemini-3.1-Pro and GPT-5.4. On <strong>knowledge-intensive benchmarks</strong> (SimpleQA, MMLU-Pro), V4 still trails considerably.</p>
+    <div class="pull">The remaining gap is not reasoning ability — it's data scale × knowledge breadth.</div>
+
+    <h3>③ On-Policy Distillation may become the dominant post-training paradigm</h3>
+    <p>Train N specialists separately; have the student learn teachers' distributions via reverse KL on its own trajectories. Combine with <strong>GRM</strong>, batch-invariant deterministic kernels, and asynchronous teacher scheduling, and you get a <strong>standardized, scalable post-training pipeline</strong>.</p>
+
+    <h3>④ The infrastructure story matters as much as the architecture story</h3>
+    <p>Chapter 3 (General Infrastructures) and §5.2 (RL Infrastructure) together span nearly 20 pages — TileLang DSL, FP4 QAT, 3FS, DSec sandbox, tensor-level checkpointing. These are what make architectural creativity actually run on 100K-GPU clusters × trillion-parameter models × million-token contexts. <strong>The infrastructure is the moat.</strong></p>
+  </section>
+
+  <!-- SECTION 9 -->
+  <section class="section" id="s9">
+    <div class="sec-head">
+      <div class="sec-num">09</div>
+      <div>
+        <div class="sec-kicker">Limitations</div>
+        <h2 class="sec-title">Authors' own <em>shortcomings</em></h2>
+      </div>
+    </div>
+    <ol style="max-width:780px;padding-left:28px;line-height:1.9">
+      <li><strong>Architectural complexity is high</strong> — many "validated but not minimally necessary" components retained to reduce risk. Future work: principled distillation.</li>
+      <li><strong>Anticipatory Routing &amp; SwiGLU Clamping lack theoretical grounding</strong>.</li>
+      <li><strong>Agent gap remains</strong>: Terminal Bench trails GPT-5.4; R&amp;D coding behind Opus 4.6 Thinking (80% vs 67%).</li>
+      <li><strong>Text-only</strong> — multimodal listed as in-progress.</li>
+      <li>Future directions: <strong>sparser embeddings</strong> (conditional memory via scalable lookup), <strong>lower-latency architectures</strong>, deeper long-horizon agent iteration.</li>
+    </ol>
+  </section>
+
+  <!-- SECTION 10 -->
+  <section class="section" id="s10">
+    <div class="sec-head">
+      <div class="sec-num">10</div>
+      <div>
+        <div class="sec-kicker">For Practitioners</div>
+        <h2 class="sec-title">Five <em>implications</em> for builders</h2>
+      </div>
+    </div>
+
+    <div class="note-grid">
+      <div class="note" data-tag="Research"><h5>Architecture researchers</h5><p>mHC (manifold constraint + Sinkhorn-Knopp) is an elegant residual upgrade. The CSA + HCA layer-interleaved hybrid is more systematic than MoBA/NSA alone — worth porting.</p></div>
+      <div class="note" data-tag="Product"><h5>Long-context product teams</h5><p>Study heterogeneous KV cache + on-disk storage. Multi-turn chat, agent frameworks with shared prompts, IDE tools — costs can drop an order of magnitude.</p></div>
+      <div class="note" data-tag="Post-train"><h5>Post-training engineers</h5><p>Specialist → OPD solves "merged model = weakest link" without fragile RL hyperparameter tuning. GRM further reduces reward-engineering cost.</p></div>
+      <div class="note warn" data-tag="Stability"><h5>Training stability</h5><p>Training MoE and seeing loss spikes? Anticipatory Routing is a pluggable rescue kit (activate only during spike). SwiGLU Clamping is near-zero cost.</p></div>
+      <div class="note accent" data-tag="Open-source"><h5>Open-source ecosystem</h5><p>V4-Flash (284B / 13B activated) is a deployment sweet spot. With FP8 KV cache + on-disk storage, inference costs meaningfully lower than V3.</p></div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<!-- APPENDIX -->
+<section class="appendix">
+  <h2>Appendix · <em>Key numbers</em> at a glance</h2>
+  <table class="big-table">
+    <tbody>
+      <tr><td>V4-Pro parameters</td><td>1.6T total · 49B act · 61 layers · 7168 hidden</td></tr>
+      <tr><td>V4-Flash parameters</td><td>284B total · 13B act · 43 layers · 4096 hidden</td></tr>
+      <tr><td>Pre-training data</td><td>32T+ tokens</td></tr>
+      <tr><td>Native context length</td><td><span class="hl">1,000,000 tokens</span></td></tr>
+      <tr><td>Vocabulary size</td><td>128K</td></tr>
+      <tr><td>CSA compression ratio (m)</td><td>4</td></tr>
+      <tr><td>HCA compression ratio (m′)</td><td>128</td></tr>
+      <tr><td>CSA top-k</td><td>512 (Flash) · 1024 (Pro)</td></tr>
+      <tr><td>Sliding window size</td><td>128</td></tr>
+      <tr><td>Sinkhorn-Knopp iterations</td><td>20</td></tr>
+      <tr><td>Newton-Schulz iterations</td><td>10 (8 aggressive + 2 conservative)</td></tr>
+      <tr><td>mHC expansion factor</td><td>4</td></tr>
+      <tr><td>Experts per MoE layer</td><td>256 (Flash) · 384 (Pro)</td></tr>
+      <tr><td>Active experts per token</td><td>6</td></tr>
+      <tr><td>Hash-routed layers</td><td>first 3</td></tr>
+      <tr><td>Peak batch size</td><td>75.5M · 94.4M tokens</td></tr>
+      <tr><td>Peak learning rate</td><td>2.7e-4 · 2.0e-4</td></tr>
+      <tr><td>Muon momentum</td><td>0.95</td></tr>
+      <tr><td>Weight decay</td><td>0.1</td></tr>
+      <tr><td>1M single-token FLOPs vs V3.2</td><td><span class="hl">27% (Pro) · 10% (Flash)</span></td></tr>
+      <tr><td>1M KV cache vs V3.2</td><td><span class="hl">10% (Pro) · 7% (Flash)</span></td></tr>
+      <tr><td>KV cache vs BF16 GQA8 baseline</td><td>~2%</td></tr>
+      <tr><td>EP theoretical speedup</td><td>1.92×</td></tr>
+      <tr><td>Codeforces rating</td><td>3206 (human rank ≈ 23)</td></tr>
+      <tr><td>Putnam-2025 formal</td><td><span class="hl">120/120 perfect score</span></td></tr>
+      <tr><td>Engineers preferring V4 as primary coding model</td><td>52% yes · 39% leaning yes · &lt;9% no</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-mark">Open-source isn't just releasing <em>weights</em> —<br/>it's publishing a <em>reproducible full-stack path</em>.</div>
+    <div class="foot-meta">
+      <b>DOSSIER · № 04 · EN</b><br/>
+      DeepSeek-V4 Deep Dive<br/>
+      English Edition · 2026<br/>
+      <br/>
+      Source: official preview (58p)<br/>
+      Analysis: in-depth English<br/>
+    </div>
+    <div class="foot-meta">
+      <b>TYPOGRAPHY</b><br/>
+      Fraunces · Display<br/>
+      JetBrains Mono · Data<br/>
+      Instrument Sans · Body<br/>
+      <br/>
+      <b>END OF DOSSIER</b>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', e=>{
+    const id=a.getAttribute('href');
+    if(id.length>1){e.preventDefault();document.querySelector(id)?.scrollIntoView({behavior:'smooth',block:'start'})}
+  })
+});
+
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){e.target.style.opacity=1;e.target.style.transform='translateY(0)'}
+  })
+},{threshold:.08});
+document.querySelectorAll('.section,.stat,.note').forEach(el=>{
+  el.style.opacity=0;el.style.transform='translateY(24px)';
+  el.style.transition='opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1)';
+  io.observe(el);
+});
+</script>
+</body>
+</html>
