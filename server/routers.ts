@@ -13,6 +13,7 @@ import {
   deleteArticle,
   upsertUser,
   upsertEmailLead,
+  hasEmailLead,
   getDb,
 } from "./db";
 import { storagePut } from "./storage";
@@ -43,6 +44,12 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    emailCaptureStatus: publicProcedure.query(async ({ ctx }) => {
+      const email = ctx.user?.email?.trim().toLowerCase();
+      if (!email) return { hasCompleted: false } as const;
+      const completed = await hasEmailLead(email);
+      return { hasCompleted: completed } as const;
+    }),
     login: publicProcedure
       .input(z.object({ email: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {

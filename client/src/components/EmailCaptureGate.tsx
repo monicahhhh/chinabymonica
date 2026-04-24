@@ -21,11 +21,18 @@ export default function EmailCaptureGate() {
     retry: false,
     refetchOnWindowFocus: false,
   });
+  const statusQuery = trpc.auth.emailCaptureStatus.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
   const captureMutation = trpc.auth.captureEmail.useMutation({
     onSuccess: async () => {
       setErrorText("");
-      await utils.auth.me.invalidate();
+      await Promise.all([
+        utils.auth.me.invalidate(),
+        utils.auth.emailCaptureStatus.invalidate(),
+      ]);
     },
     onError: (error) => {
       setErrorText(error.message || (isEN ? "Failed to save email." : "邮箱保存失败，请重试。"));
@@ -33,7 +40,11 @@ export default function EmailCaptureGate() {
   });
 
   const isAdminPath = location.startsWith("/admin");
-  const needsEmail = !meQuery.isLoading && !isAdminPath && (!meQuery.data || !meQuery.data.email);
+  const needsEmail =
+    !meQuery.isLoading &&
+    !statusQuery.isLoading &&
+    !isAdminPath &&
+    !statusQuery.data?.hasCompleted;
   const open = needsEmail && !dismissed;
 
   const helperText = useMemo(

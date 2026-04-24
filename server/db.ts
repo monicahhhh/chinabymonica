@@ -102,7 +102,6 @@ export async function upsertEmailLead(input: {
     );
   }
 
-  // Ensure table exists without requiring an immediate schema migration.
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS email_leads (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -120,6 +119,26 @@ export async function upsertEmailLead(input: {
       subscribeNewsletter = VALUES(subscribeNewsletter),
       updatedAt = CURRENT_TIMESTAMP
   `);
+}
+
+export async function hasEmailLead(email: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS email_leads (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(320) NOT NULL UNIQUE,
+      subscribeNewsletter BOOLEAN NOT NULL DEFAULT FALSE,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  const rows = await db.execute(sql`
+    SELECT id FROM email_leads WHERE email = ${email} LIMIT 1
+  `);
+  return Array.isArray(rows) && rows.length > 0;
 }
 
 export async function getUserByOpenId(openId: string) {
