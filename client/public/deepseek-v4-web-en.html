@@ -70,7 +70,7 @@ a{color:inherit}
 .nav a::before{content:attr(data-n);color:var(--accent);margin-right:6px;font-weight:500}
 .lang{display:flex;gap:6px;color:var(--text-dim)}
 .lang span{padding:2px 7px;border:1px solid var(--rule-strong);border-radius:2px}
-.lang .on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.lang .on{background:var(--bg-3);color:var(--ink);border-color:var(--rule-strong)}
 
 .hero{
   position:relative;z-index:2;
@@ -160,8 +160,8 @@ main{min-width:0}
 .section ul li::before{content:"▸";color:var(--accent);position:absolute;left:0;top:4px;font-size:12px}
 
 .paper-panel{
-  background:var(--paper);color:var(--ink);padding:36px 40px;margin:32px 0;border-radius:2px;
-  position:relative;box-shadow:0 24px 60px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
+  background:var(--bg-2);color:var(--ink);padding:36px 40px;margin:32px 0;border-radius:2px;
+  position:relative;box-shadow:0 24px 60px -30px rgba(0,0,0,.14), 0 0 0 1px rgba(31,26,23,.08);
   font-family:var(--serif);
 }
 .paper-panel::before{
@@ -237,7 +237,7 @@ main{min-width:0}
 .flow .arrow::before{content:"↓";margin-right:8px;color:var(--accent)}
 
 .appendix{
-  background:var(--paper);color:var(--ink);padding:56px 48px;margin:96px 0 0;
+  background:var(--bg-2);color:var(--ink);padding:56px 48px;margin:96px 0 0;
   border-top:6px solid var(--accent-2);
   position:relative;
 }
@@ -258,14 +258,14 @@ main{min-width:0}
 .appendix .big-table td .hl{background:var(--accent);color:var(--ink);padding:1px 6px}
 
 footer{
-  background:var(--bg);padding:80px 32px 60px;border-top:1px solid var(--rule);
+  background:var(--bg-2);padding:80px 32px 60px;border-top:1px solid var(--rule);
   position:relative;z-index:2;
 }
 .foot-inner{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;align-items:start}
-.foot-mark{font-family:var(--serif);font-weight:300;font-style:italic;font-size:44px;color:var(--paper);line-height:1.1;letter-spacing:-.02em;max-width:620px}
+.foot-mark{font-family:var(--serif);font-weight:300;font-style:italic;font-size:44px;color:var(--ink);line-height:1.1;letter-spacing:-.02em;max-width:620px}
 .foot-mark em{color:var(--accent);font-style:italic}
 .foot-meta{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;line-height:1.9;text-transform:uppercase}
-.foot-meta b{color:var(--paper);font-weight:500}
+.foot-meta b{color:var(--ink);font-weight:500}
 
 @media (max-width: 1000px){
   .layout{grid-template-columns:1fr;gap:32px;padding:56px 24px}
