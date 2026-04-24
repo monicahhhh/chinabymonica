@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Insights from "./pages/Insights";
 import Connect from "./pages/Connect";
+import DeepSeekV4 from "./pages/DeepSeekV4";
 import ArticleDetail from "./pages/ArticleDetail";
 import AdminArticles from "./pages/AdminArticles";
 import AdminLogin from "./pages/AdminLogin";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/insights" component={Insights} />
       <Route path="/insights/:id" component={ArticleDetail} />
       <Route path="/connect" component={Connect} />
+      <Route path="/deepseek-v4" component={DeepSeekV4} />
 
       {/* Chinese routes under /cn */}
       <Route path="/cn" component={Home} />
@@ -41,6 +43,7 @@ function Router() {
       <Route path="/cn/insights" component={Insights} />
       <Route path="/cn/insights/:id" component={ArticleDetail} />
       <Route path="/cn/connect" component={Connect} />
+      <Route path="/cn/deepseek-v4" component={DeepSeekV4} />
 
       {/* Admin routes */}
       <Route path="/admin/login" component={AdminLogin} />
