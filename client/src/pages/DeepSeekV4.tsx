@@ -7,10 +7,13 @@ export default function DeepSeekV4() {
   const isEN = lang === "en";
 
   return (
-    <div className="pt-24 pb-16 lg:pt-32 lg:pb-20">
-      <div className="container">
+    <div className="pt-24 lg:pt-28 bg-[var(--color-warm-gray)]">
+      <div className="container pb-8 lg:pb-10">
         <div className="wide-column">
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-ink-muted)] mb-3">
+          <p
+            className="text-xs uppercase tracking-[0.3em] text-[var(--color-ink-muted)] mb-3"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
             {isEN ? "Document" : "文档"}
           </p>
           <h1
@@ -24,24 +27,15 @@ export default function DeepSeekV4() {
               ? "This page directly publishes your provided DeepSeek V4 HTML page."
               : "本页直接发布你提供的 DeepSeek V4 网页内容。"}
           </p>
-
-          <a
-            href={PAGE_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium bg-[var(--color-ink)] text-white hover:opacity-90 transition-opacity mb-8"
-          >
-            {isEN ? "Open Full Page" : "打开完整页面"}
-          </a>
-
-          <div className="border border-[var(--color-ink)]/10 bg-white overflow-hidden">
-            <iframe
-              src={PAGE_URL}
-              title="DeepSeek V4 Web EN"
-              className="w-full h-[82vh] min-h-[760px]"
-            />
-          </div>
         </div>
+      </div>
+
+      <div className="border-y border-[var(--color-ink)]/10 bg-white">
+        <iframe
+          src={PAGE_URL}
+          title="DeepSeek V4 Web EN"
+          className="w-full h-[calc(100vh-7.5rem)] min-h-[900px]"
+        />
       </div>
     </div>
   );
