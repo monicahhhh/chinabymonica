@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DeepSeek-V4 技术报告 · 深度解析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d14;
+  --bg-2:#12161f;
+  --bg-3:#1a1f2b;
+  --paper:#f0e8d7;
+  --paper-2:#e4d9c0;
+  --ink:#0a0a0a;
+  --text:#d8d2c5;
+  --text-dim:#8a8a93;
+  --muted:#5e6373;
+  --rule:rgba(240,232,215,0.10);
+  --rule-strong:rgba(240,232,215,0.22);
+  --accent:#7af3c6;         /* phosphor mint */
+  --accent-2:#ff6a47;       /* burnt orange */
+  --accent-3:#ffd76a;       /* aged gold */
+  --violet:#b39dff;
+  --serif:"Fraunces","Noto Serif SC",ui-serif,Georgia,serif;
+  --sans:"Noto Sans SC",system-ui,"SF Pro Text",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:350;line-height:1.72;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(122,243,198,.08), transparent 60%),
+    radial-gradient(900px 500px at 5% 20%, rgba(255,106,71,.045), transparent 55%),
+    radial-gradient(1000px 600px at 95% 100%, rgba(179,157,255,.05), transparent 60%),
+    var(--bg);
+  overflow-x:hidden;
+}
+::selection{background:var(--accent);color:var(--ink)}
+img{max-width:100%;display:block}
+a{color:inherit}
+
+/* subtle grid overlay */
+.grid-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(to right, rgba(240,232,215,0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(240,232,215,0.025) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(1200px 800px at 50% 30%, #000 40%, transparent 80%);
+}
+.grain{
+  position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.06;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* top bar */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:blur(14px) saturate(1.2);
+  background:rgba(10,13,20,.66);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-inner{max-width:1320px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:28px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+.brand{display:flex;align-items:center;gap:10px;color:var(--paper);font-weight:500}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.nav{display:flex;gap:22px;margin-left:auto;color:var(--text-dim)}
+.nav a{text-decoration:none;position:relative;transition:color .2s}
+.nav a:hover{color:var(--paper)}
+.nav a::before{content:attr(data-n);color:var(--accent);margin-right:6px;font-weight:500}
+
+/* hero */
+.hero{
+  position:relative;z-index:2;
+  max-width:1320px;margin:0 auto;padding:80px 32px 40px;
+}
+.hero-meta{
+  font-family:var(--mono);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;
+  display:flex;gap:24px;flex-wrap:wrap;align-items:center;
+}
+.hero-meta .sep{color:var(--muted);letter-spacing:0}
+.hero-meta .tag{border:1px solid var(--accent);padding:3px 10px;color:var(--accent);letter-spacing:.2em}
+h1.title{
+  font-family:var(--serif);font-weight:400;font-style:normal;
+  font-variation-settings:"opsz" 144,"SOFT" 30,"WONK" 1;
+  font-size:clamp(56px,10vw,148px);line-height:.92;letter-spacing:-.03em;
+  color:var(--paper);margin:0 0 24px;
+}
+h1.title em{
+  font-style:italic;color:var(--accent);
+  font-variation-settings:"opsz" 144,"SOFT" 80,"WONK" 1;
+}
+.sub{
+  font-family:var(--serif);font-style:italic;font-weight:300;
+  font-size:clamp(20px,2.4vw,30px);color:var(--text);max-width:820px;line-height:1.4;margin-bottom:48px;
+}
+.sub span.hl{background:linear-gradient(transparent 60%, rgba(122,243,198,.28) 60%);padding:0 4px;font-style:normal;font-weight:500;color:var(--paper)}
+
+.hero-cite{
+  font-family:var(--mono);font-size:12px;color:var(--text-dim);
+  border-left:2px solid var(--accent);padding:14px 18px;max-width:640px;margin-bottom:64px;
+  background:rgba(122,243,198,.04);
+}
+.hero-cite b{color:var(--paper);font-weight:500}
+
+/* stat tiles */
+.stat-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule-strong);
+}
+.stat{
+  padding:28px 24px;border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;
+}
+.stat:last-child{border-right:none}
+.stat .label{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim)}
+.stat .val{font-family:var(--serif);font-weight:300;font-size:54px;line-height:1;color:var(--paper);letter-spacing:-.02em}
+.stat .val em{font-style:italic;color:var(--accent)}
+.stat .val .u{font-size:18px;color:var(--text-dim);margin-left:4px;font-family:var(--mono);font-weight:400}
+.stat .desc{font-size:13px;color:var(--text-dim);line-height:1.5}
+.stat::after{content:"";position:absolute;inset:auto 0 0 0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);transform:scaleX(0);transform-origin:left;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.stat:hover::after{transform:scaleX(1)}
+
+/* TOC / sections layout */
+.layout{max-width:1320px;margin:0 auto;padding:96px 32px 40px;display:grid;grid-template-columns:220px 1fr;gap:72px;position:relative;z-index:2}
+.toc{
+  position:sticky;top:96px;align-self:start;
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);
+  line-height:1.8;
+}
+.toc h5{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--accent);margin:0 0 18px;font-weight:500}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc}
+.toc ol li{counter-increment:toc;padding:7px 0;border-top:1px solid var(--rule);display:flex;gap:10px;cursor:pointer;transition:color .2s}
+.toc ol li::before{content:counter(toc,decimal-leading-zero);color:var(--muted);font-weight:300;min-width:28px}
+.toc ol li:hover{color:var(--paper)}
+.toc a{text-decoration:none;color:inherit}
+
+main{min-width:0}
+.section{margin-bottom:120px;scroll-margin-top:80px}
+.sec-head{display:grid;grid-template-columns:120px 1fr;gap:32px;align-items:end;margin-bottom:44px;padding-bottom:22px;border-bottom:1px solid var(--rule-strong)}
+.sec-num{
+  font-family:var(--serif);font-weight:300;font-style:italic;
+  font-variation-settings:"opsz" 144,"SOFT" 100,"WONK" 1;
+  font-size:92px;line-height:.9;color:var(--accent);letter-spacing:-.04em;
+}
+.sec-title{
+  font-family:var(--serif);font-weight:400;font-size:42px;line-height:1.05;letter-spacing:-.01em;color:var(--paper);margin:0;
+}
+.sec-title em{font-style:italic;color:var(--accent)}
+.sec-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
+
+.section p{font-size:16.5px;max-width:780px;margin:0 0 18px}
+.section p strong{color:var(--paper);font-weight:500}
+.section h3{font-family:var(--serif);font-weight:500;font-size:26px;color:var(--paper);margin:48px 0 16px;letter-spacing:-.01em}
+.section h3::before{content:"§ ";color:var(--accent);font-family:var(--mono);font-weight:400;font-size:18px;margin-right:6px;vertical-align:2px}
+.section h4{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:28px 0 10px}
+
+.section ul{max-width:780px;padding-left:0;list-style:none}
+.section ul li{position:relative;padding-left:22px;margin-bottom:8px;font-size:16px}
+.section ul li::before{content:"▸";color:var(--accent);position:absolute;left:0;top:0;font-size:12px;top:4px}
+
+/* paper panel (inversion) */
+.paper-panel{
+  background:var(--paper);color:var(--ink);padding:36px 40px;margin:32px 0;border-radius:2px;
+  position:relative;box-shadow:0 24px 60px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
+  font-family:var(--serif);
+}
+.paper-panel::before{
+  content:"";position:absolute;left:-8px;top:18px;bottom:18px;width:3px;background:var(--accent-2);
+}
+.paper-panel .stamp{
+  position:absolute;top:20px;right:28px;font-family:var(--mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--accent-2);
+  border:1px solid var(--accent-2);padding:3px 10px;
+}
+.paper-panel h4{font-family:var(--mono);color:var(--accent-2);font-size:11px;margin-top:0}
+.paper-panel p{color:var(--ink);font-size:18px;line-height:1.55;font-family:var(--serif);max-width:none}
+
+/* formula / code block */
+.formula{
+  font-family:var(--mono);font-size:13.5px;color:var(--accent);
+  background:var(--bg-2);border:1px solid var(--rule);padding:18px 22px;margin:16px 0;
+  border-left:3px solid var(--accent);
+  overflow-x:auto;white-space:pre;
+}
+
+/* table styles */
+.data{
+  width:100%;border-collapse:collapse;margin:20px 0 28px;font-family:var(--mono);font-size:13px;
+  border:1px solid var(--rule-strong);
+}
+.data thead th{
+  background:var(--bg-3);color:var(--paper);font-weight:500;text-align:left;padding:12px 14px;border-bottom:1px solid var(--rule-strong);
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+}
+.data thead th:not(:first-child){text-align:right}
+.data tbody td{padding:11px 14px;border-top:1px solid var(--rule);color:var(--text)}
+.data tbody td:not(:first-child){text-align:right}
+.data tbody td:first-child{color:var(--paper);font-weight:400}
+.data tbody tr:hover{background:rgba(122,243,198,.04)}
+.data td .best{color:var(--accent);font-weight:700}
+.data td .ours{color:var(--accent-3);font-weight:700}
+.data caption{caption-side:bottom;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;padding-top:8px;text-transform:uppercase}
+
+/* pull quote */
+.pull{
+  font-family:var(--serif);font-style:italic;font-weight:300;
+  font-variation-settings:"opsz" 144,"SOFT" 60,"WONK" 1;
+  font-size:32px;line-height:1.28;color:var(--paper);max-width:780px;
+  border-top:1px solid var(--accent);border-bottom:1px solid var(--accent);
+  padding:28px 0;margin:40px 0;letter-spacing:-.01em;
+}
+.pull::before{content:"「";color:var(--accent);font-size:1.4em;line-height:0;vertical-align:-.1em;margin-right:6px}
+.pull::after{content:"」";color:var(--accent);font-size:1.4em;line-height:0;vertical-align:-.35em;margin-left:4px}
+
+/* two column note */
+.note-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:24px 0}
+.note{border:1px solid var(--rule-strong);padding:24px;background:var(--bg-2);position:relative;overflow:hidden}
+.note::before{content:attr(data-tag);position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--accent);border:1px solid var(--accent);padding:2px 8px;text-transform:uppercase}
+.note h5{font-family:var(--serif);font-weight:500;font-size:20px;color:var(--paper);margin:0 0 10px;letter-spacing:-.01em}
+.note p{font-size:14.5px;color:var(--text);margin:0;max-width:none}
+.note.accent{border-color:var(--accent);background:linear-gradient(180deg, rgba(122,243,198,.06), transparent)}
+.note.warn::before{color:var(--accent-2);border-color:var(--accent-2)}
+.note.warn{border-color:rgba(255,106,71,.3)}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:8px;margin:24px 0;font-family:var(--mono);font-size:12px}
+.bar{display:grid;grid-template-columns:180px 1fr 60px;gap:14px;align-items:center}
+.bar .name{color:var(--text-dim)}
+.bar .track{height:20px;background:var(--bg-2);border:1px solid var(--rule);position:relative;overflow:hidden}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--accent),rgba(122,243,198,.2));animation:grow 1.4s cubic-bezier(.2,.8,.2,1) both}
+.bar.neg .fill{background:linear-gradient(90deg,var(--accent-2),rgba(255,106,71,.2))}
+.bar .pct{color:var(--paper);text-align:right;font-weight:500}
+@keyframes grow{from{transform:scaleX(0);transform-origin:left}}
+
+/* flow diagram */
+.flow{margin:32px 0;font-family:var(--mono);font-size:13px;color:var(--text)}
+.flow .node{
+  display:inline-block;padding:10px 18px;border:1px solid var(--accent);color:var(--accent);
+  margin:4px 0;position:relative;background:rgba(122,243,198,.05)
+}
+.flow .node.fill{background:var(--accent);color:var(--ink);font-weight:500}
+.flow .arrow{display:block;padding-left:40px;color:var(--muted);margin:4px 0;font-size:11px}
+.flow .arrow::before{content:"↓";margin-right:8px;color:var(--accent)}
+.flow .branch{padding-left:30px;border-left:1px dashed var(--rule-strong);margin:6px 0 6px 30px}
+
+/* appendix giant table */
+.appendix{
+  background:var(--paper);color:var(--ink);padding:56px 48px;margin:96px 0 0;
+  border-top:6px solid var(--accent-2);
+  position:relative;
+}
+.appendix::before{
+  content:"APPENDIX ⁄ 速查";position:absolute;top:20px;right:40px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--accent-2);
+}
+.appendix h2{font-family:var(--serif);font-weight:500;font-size:48px;margin:0 0 32px;color:var(--ink);letter-spacing:-.02em}
+.appendix h2 em{font-style:italic;color:var(--accent-2)}
+.appendix .big-table{
+  width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;
+  border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+}
+.appendix .big-table tr{border-bottom:1px solid rgba(10,10,10,.12)}
+.appendix .big-table td{padding:11px 14px}
+.appendix .big-table td:first-child{color:rgba(10,10,10,.68);width:58%}
+.appendix .big-table td:last-child{text-align:right;color:var(--ink);font-weight:500}
+.appendix .big-table td .hl{background:var(--accent);color:var(--ink);padding:1px 6px}
+
+/* footer */
+footer{
+  background:var(--bg);padding:80px 32px 60px;border-top:1px solid var(--rule);
+  position:relative;z-index:2;
+}
+.foot-inner{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;align-items:start}
+.foot-mark{font-family:var(--serif);font-weight:300;font-style:italic;font-size:48px;color:var(--paper);line-height:1;letter-spacing:-.02em}
+.foot-mark em{color:var(--accent);font-style:italic}
+.foot-meta{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;line-height:1.9;text-transform:uppercase}
+.foot-meta b{color:var(--paper);font-weight:500}
+
+/* responsive */
+@media (max-width: 1000px){
+  .layout{grid-template-columns:1fr;gap:32px;padding:56px 24px}
+  .toc{position:static}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .stat{border-right:none;border-top:1px solid var(--rule)}
+  .sec-head{grid-template-columns:1fr;gap:12px}
+  .sec-num{font-size:64px}
+  .note-grid{grid-template-columns:1fr}
+  .nav{display:none}
+  .hero{padding:48px 24px 24px}
+  .bar{grid-template-columns:120px 1fr 50px;font-size:11px}
+  .foot-inner{grid-template-columns:1fr}
+  .appendix{padding:36px 24px}
+  .topbar-inner{padding:12px 24px}
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="grain"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="dot"></span>DS-V4 / DOSSIER №04</div>
+    <div class="nav">
+      <a href="#s1" data-n="01">核心定位</a>
+      <a href="#s3" data-n="03">四大创新</a>
+      <a href="#s6" data-n="06">后训练</a>
+      <a href="#s7" data-n="07">评测</a>
+      <a href="#s8" data-n="08">深判断</a>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-meta">
+    <span class="tag">DEEP DIVE</span>
+    <span>Technical Report · Preview</span>
+    <span class="sep">/</span>
+    <span>58 pages</span>
+    <span class="sep">/</span>
+    <span>2026 · Vol 04</span>
+  </div>
+
+  <h1 class="title">效率<em>革命</em><br/>打开百万 token 的门</h1>
+
+  <p class="sub">
+    DeepSeek-V4 把过去两年"更强推理 × 更大规模"的竞赛，重写成一场关于<span class="hl">每个 token 有多贵</span>的战争——
+    在一百万上下文里，重新定义"跑得起、训得动、部得上"的上限。
+  </p>
+
+  <div class="hero-cite">
+    原文：<b>DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence</b><br/>
+    作者：DeepSeek-AI 团队 · research@deepseek.com<br/>
+    权重：huggingface.co/collections/deepseek-ai/deepseek-v4
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="label">V4-Pro · 1M FLOPs</div>
+      <div class="val"><em>27</em><span class="u">%</span></div>
+      <div class="desc">相对 V3.2 单 token 推理算力</div>
+    </div>
+    <div class="stat">
+      <div class="label">V4-Flash · 1M FLOPs</div>
+      <div class="val"><em>10</em><span class="u">%</span></div>
+      <div class="desc">10× 能效的轻旗舰</div>
+    </div>
+    <div class="stat">
+      <div class="label">KV Cache vs V3.2</div>
+      <div class="val"><em>7</em><span class="u">%</span></div>
+      <div class="desc">V4-Flash 下百万上下文显存</div>
+    </div>
+    <div class="stat">
+      <div class="label">vs BF16 GQA8 baseline</div>
+      <div class="val"><em>2</em><span class="u">%</span></div>
+      <div class="desc">压缩 × 稀疏 × 低精度三位一体</div>
+    </div>
+  </div>
+</section>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- TOC -->
+  <aside class="toc">
+    <h5>目录 / CONTENTS</h5>
+    <ol>
+      <li><a href="#s1">核心定位</a></li>
+      <li><a href="#s2">两款旗舰</a></li>
+      <li><a href="#s3">四大创新</a></li>
+      <li><a href="#s4">基础设施</a></li>
+      <li><a href="#s5">预训练与稳定性</a></li>
+      <li><a href="#s6">后训练范式</a></li>
+      <li><a href="#s7">评测结果</a></li>
+      <li><a href="#s8">四个深判断</a></li>
+      <li><a href="#s9">局限与未来</a></li>
+      <li><a href="#s10">实践启示</a></li>
+    </ol>
+  </aside>
+
+  <main>
+
+  <!-- SECTION 1 -->
+  <section class="section" id="s1">
+    <div class="sec-head">
+      <div class="sec-num">01</div>
+      <div>
+        <div class="sec-kicker">Positioning · 方向</div>
+        <h2 class="sec-title">用效率<em>把百万上下文做到能用</em></h2>
+      </div>
+    </div>
+    <p>DeepSeek-V4 的主题只有一个字——<strong>效</strong>。它直接挑战 Transformer 最本质的二次复杂度瓶颈，把"百万级上下文做到能用、能训、能部署"作为第一目标。</p>
+    <p>这不是常规意义上的优化，而是一次架构层面的重构。V4-Pro 即使激活参数更多，在一百万 token 场景下仍比 V3.2 <strong>省 3.7 倍算力、9.5 倍 KV cache</strong>；V4-Flash 把 KV cache 压到了约 <strong>1/14</strong>。</p>
+
+    <div class="bars">
+      <div class="bar neg"><span class="name">V4-Pro FLOPs</span><span class="track"><span class="fill" style="width:27%"></span></span><span class="pct">27%</span></div>
+      <div class="bar neg"><span class="name">V4-Flash FLOPs</span><span class="track"><span class="fill" style="width:10%"></span></span><span class="pct">10%</span></div>
+      <div class="bar neg"><span class="name">V4-Pro KV</span><span class="track"><span class="fill" style="width:10%"></span></span><span class="pct">10%</span></div>
+      <div class="bar neg"><span class="name">V4-Flash KV</span><span class="track"><span class="fill" style="width:7%"></span></span><span class="pct">7%</span></div>
+      <div class="bar neg"><span class="name">vs GQA8 BF16</span><span class="track"><span class="fill" style="width:2%"></span></span><span class="pct">~2%</span></div>
+    </div>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em">* 相对 V3.2 / BF16 GQA8 baseline 的百分比，越短越好</p>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section class="section" id="s2">
+    <div class="sec-head">
+      <div class="sec-num">02</div>
+      <div>
+        <div class="sec-kicker">Dual Flagships</div>
+        <h2 class="sec-title"><em>同一架构</em>的两个体量</h2>
+      </div>
+    </div>
+
+    <table class="data">
+      <thead>
+        <tr><th>Model</th><th>Total</th><th>Act.</th><th>Layers</th><th>Hidden</th><th>Experts</th><th>Act/token</th><th>Train tokens</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>V4-Pro</td><td>1.6T</td><td>49B</td><td>61</td><td>7168</td><td>384</td><td>6</td><td>33T</td></tr>
+        <tr><td>V4-Flash</td><td>284B</td><td>13B</td><td>43</td><td>4096</td><td>256</td><td>6</td><td>32T</td></tr>
+      </tbody>
+      <caption>两款模型都原生支持 1M token 上下文，配套 Non-think / Think High / Think Max 三档思考强度。</caption>
+    </table>
+
+    <div class="note-grid">
+      <div class="note accent" data-tag="Pro-Max">
+        <h5>开源旗舰 · 推理之王</h5>
+        <p>1.6T 参数 × 49B 激活 × 61 层深栈。对标 Opus-4.6 / GPT-5.4 / Gemini-3.1-Pro，在 Codeforces、LiveCodeBench、Apex Shortlist 上已经是当前最强开源。</p>
+      </div>
+      <div class="note" data-tag="Flash-Max">
+        <h5>高性价比推理引擎</h5>
+        <p>284B / 13B 激活，相同能力用 1/3 的激活参数就能达到 V3.2 水平。FP8 存储 + 磁盘 KV cache 让部署成本断崖式下降。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section class="section" id="s3">
+    <div class="sec-head">
+      <div class="sec-num">03</div>
+      <div>
+        <div class="sec-kicker">Four Core Innovations</div>
+        <h2 class="sec-title">效率革命的<em>四台发动机</em></h2>
+      </div>
+    </div>
+
+    <h3>3.1 &nbsp;Hybrid Attention · CSA + HCA 交错堆叠</h3>
+    <p>整篇报告最重要的一章。V4 设计了两种互补的注意力机制，然后<strong>按层交错</strong>使用——不是简单选其一。</p>
+
+    <h4>CSA · Compressed Sparse Attention "先压缩、再稀疏"</h4>
+    <ul>
+      <li><strong>压缩阶段</strong>：每 m=4 个 token 的 KV 被可学习的位置偏置 + softmax 权重压缩成 1 条 "KV 摘要"，带前后重叠的对偶键值流 Cₐ/Cᵦ。</li>
+      <li><strong>稀疏阶段</strong>：在压缩序列上套 DeepSeek Sparse Attention——独立的 Lightning Indexer（低秩查询 + ReLU 相似度 + top-k）挑出最相关的块做稠密注意力。</li>
+      <li><strong>滑动窗口补丁</strong>：n_win=128 的 SWA 分支保证局部依赖不被破坏。</li>
+      <li><strong>Attention Sink</strong>：每个 head 可学习的 sink logit，允许"主动放弃注意"，总注意力和 &lt; 1。</li>
+    </ul>
+
+    <h4>HCA · Heavily Compressed Attention "极端压缩 + 稠密注意力"</h4>
+    <p>CSA 的 m=4 属于温和压缩；HCA 用的是 <strong>m′=128</strong>——把 128 个 token 压成 1 条。既然压得这么狠，就<strong>不再做稀疏</strong>，而是对极短序列做完整稠密注意力。结构简单（无 indexer、无 top-k），但压缩比惊人。</p>
+
+    <div class="pull">细看近处的 CSA ＋ 远看全局的 HCA — 每层都能扫一眼整个上下文</div>
+
+    <h4>三级精度策略</h4>
+    <div class="formula">RoPE 维度 ……… BF16    （位置信息敏感）
+KV 其他维度 …… FP8     （KV cache 直接减半）
+Indexer QK ……… FP4     （top-k 不需精确）</div>
+
+    <h3>3.2 &nbsp;mHC · Manifold-Constrained Hyper-Connections</h3>
+    <p>Hyper-Connection 把 residual stream 从 R^d 扩展到 R^(n_hc × d)。问题在于堆深就容易数值爆炸。V4 的创新是把 residual mapping 矩阵 <strong>B_l 限制到双随机矩阵（Birkhoff 多胞形）流形</strong>上：</p>
+
+    <div class="formula">B_l ∈ M := { M ∈ R^{n×n} | M·1_n = 1_n,  1_n^T·M = 1_n^T,  M ≥ 0 }</div>
+
+    <ul>
+      <li>‖B_l‖₂ ≤ 1 → 映射非扩张，前/反向都不放大信号。</li>
+      <li>集合 M 在乘法下闭合 → 深堆叠时稳定性可复合。</li>
+      <li>Sinkhorn-Knopp 迭代 20 次投影到流形（先 exp 再交替行/列归一化）。</li>
+      <li>A_l、C_l 用 Sigmoid 限幅 + 非负约束，避免信号抵消。</li>
+    </ul>
+
+    <div class="paper-panel">
+      <div class="stamp">读者价值</div>
+      <h4>WHY THIS MATTERS</h4>
+      <p>mHC 给想训 100+ 层超深模型的人，提供了一个"理论上有保障、实操上可用"的 residual 升级方案。工程代价：激活内存 + 流水线通信增加，团队用"融合 kernel + 细粒度 tensor-level 重算 + DualPipe 1F1B overlap"把额外时钟压到 <b>6.7%</b>。</p>
+    </div>
+
+    <h3>3.3 &nbsp;Muon 优化器 · 大规模替换 AdamW</h3>
+    <p>V4 把<strong>绝大多数参数</strong>从 AdamW 换成 Muon，仅保留 AdamW 用于 embedding、LM head、RMSNorm、mHC 静态偏置与门控。</p>
+
+    <div class="flow">
+      <span class="node">累积动量 M_t</span>
+      <div class="arrow">Nesterov 修正 + 混合 Newton–Schulz 迭代</div>
+      <span class="node">近似正交化（奇异值拉到 1）</span>
+      <div class="arrow">按 √max(n,m)·γ 重标定更新 RMS</div>
+      <span class="node fill">与 AdamW 共用超参 · 权重衰减 + 更新</span>
+    </div>
+
+    <div class="note-grid">
+      <div class="note" data-tag="Mixed N-S">
+        <h5>混合 Newton-Schulz</h5>
+        <p>前 8 步用激进系数 (3.4445, −4.7750, 2.0315) 快速收敛；后 2 步切到温和 (2, −1.5, 0.5) 把奇异值稳准地钉在 1。既快又稳。</p>
+      </div>
+      <div class="note" data-tag="ZeRO × Muon">
+        <h5>ZeRO 冲突怎么办</h5>
+        <p>Muon 必须用完整梯度矩阵。用<strong>背包算法分桶 + MoE 参数扁平化 + BF16 随机舍入梯度同步 + all-to-all + 本地 FP32 累加</strong>：额外显存 &lt;10%，通信量减半。</p>
+      </div>
+    </div>
+
+    <h3>3.4 &nbsp;DeepSeekMoE 延续 · Hash Routing 开头几层</h3>
+    <ul>
+      <li>Affinity 打分从 <strong>Sigmoid</strong> 换成 <strong>Sqrt(Softplus(·))</strong>——实践证明更稳。</li>
+      <li><strong>取消 routing target nodes 数量约束</strong>，重新设计并行策略补偿。</li>
+      <li>开头 <strong>3 层 MoE 用 Hash Routing</strong>——按 token ID 的 hash 直接决定专家，避免早期浅层路由未学好时的不稳定。</li>
+      <li>MTP 深度 1，沿用 V3 的多 token 预测。</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section class="section" id="s4">
+    <div class="sec-head">
+      <div class="sec-num">04</div>
+      <div>
+        <div class="sec-kicker">Infrastructure</div>
+        <h2 class="sec-title">让百万上下文<em>真的跑起来</em></h2>
+      </div>
+    </div>
+    <p>报告里基建的份量和架构几乎一样重。这是 DeepSeek 把自己沉淀的"模型 × 工程"能力向外展示的总汇。</p>
+
+    <div class="note-grid">
+      <div class="note" data-tag="1.92×"><h5>MoE 通信-计算细粒度重叠</h5><p>一次 MoE 层拆成 3 个 expert wave 流水，通信藏在前一 wave 计算后面。理论加速 1.92×（Comet 1.42×），同时允许互联带宽更低。</p></div>
+      <div class="note" data-tag="DSL"><h5>TileLang</h5><p>自研领域专用语言，平衡开发效率与运行效率，替代手写 CUDA。</p></div>
+      <div class="note" data-tag="bitwise"><h5>Batch-Invariant 确定性 kernel 库</h5><p>保证训练 / 推理 / RL rollout bitwise 可复现——这是 on-policy 算法的命脉。</p></div>
+      <div class="note" data-tag="FP4 QAT"><h5>FP4 量化感知训练</h5><p>MoE 专家权重和 indexer QK 都用 FP4。RL rollout 直接用真实 FP4 权重，训/部署行为一致。</p></div>
+      <div class="note" data-tag="TorchFX"><h5>Tensor-Level Checkpointing</h5><p>标注几个张量就能自动重算。TorchFX 追踪计算图，反向遍历找到最小重算子图，零多余开销。</p></div>
+      <div class="note" data-tag="CP 2-stage"><h5>Contextual Parallelism 两阶段</h5><p>① rank 把最后 m 个未压缩 KV 发给下一 rank → ② 合并压缩 → all-gather → 融合 select-and-pad kernel 重组。</p></div>
+      <div class="note accent" data-tag="Heterogeneous"><h5>异构 KV Cache × 磁盘存储</h5><p>Full Caching / Periodic Checkpointing / Zero Caching 三策略自由切换。shared-prefix reuse（多轮对话、agent 共享 prompt）成本可降一个数量级——这是 1M 上下文<strong>可商用</strong>的关键。</p></div>
+      <div class="note" data-tag="DSec"><h5>DSec 生产级 Agentic 沙箱</h5><p>Rust 实现，四种基质（Function Call / Container / microVM / fullVM）共用 Python SDK，单集群管数十万并发沙箱，抢占后从 trajectory log 断点续跑。</p></div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section class="section" id="s5">
+    <div class="sec-head">
+      <div class="sec-num">05</div>
+      <div>
+        <div class="sec-kicker">Pre-training & Stability</div>
+        <h2 class="sec-title">两个极其实用的<em>稳定性秘方</em></h2>
+      </div>
+    </div>
+
+    <h3>数据与训练配置</h3>
+    <ul>
+      <li><strong>32T+ tokens</strong> 多元高质量语料：过滤批量模板化内容、显式加权长文档、扩大多语言、中期加入 agentic data。</li>
+      <li>序列长度逐步扩：4K → 16K → 64K → 1M；前 1T tokens 用 dense attention warmup，之后在 64K 引入稀疏。</li>
+      <li>Batch peak：V4-Flash 75.5M / V4-Pro 94.4M tokens。峰值 LR：2.7e-4 / 2.0e-4，余弦衰减到 1/10。</li>
+      <li>Auxiliary-loss-free 平衡 + 小权重 sequence balance loss；MTP 权重 0.3，衰减期 0.1。</li>
+    </ul>
+
+    <h3>Loss Spike 的两招</h3>
+    <p>团队坦承训练万亿 MoE 时频繁遇到 loss spike。根因是 <strong>MoE 层的 outlier + 路由机制互相加剧</strong>。</p>
+
+    <div class="note-grid">
+      <div class="note accent" data-tag="Routing">
+        <h5>Anticipatory Routing · 前瞻路由</h5>
+        <p>把<strong>特征计算</strong>和<strong>路由决策</strong>解耦：step t 用 θ_t 做特征，但路由索引用 θ_{t-Δt}（提前一步预计算）。异步化打破"特征→outlier→路由→更多 outlier"的恶性循环。</p>
+        <p>自动检测机制：只在 spike 发生时启用，稳定后自动关闭 → 整体额外开销可忽略。</p>
+      </div>
+      <div class="note accent" data-tag="Clamp">
+        <h5>SwiGLU Clamping</h5>
+        <p>linear 分量限制 [-10, 10]，gate 分量上限 10。<strong>简单但有效</strong>，直接消除 outlier。</p>
+      </div>
+    </div>
+
+    <div class="paper-panel">
+      <div class="stamp">可贵</div>
+      <h4>坦诚 · CANDOR</h4>
+      <p>V4 对这两招的机理坦率写道 "it works but we don't fully understand why"——这种态度在当前"包装过度"的技术报告里尤其稀缺。</p>
+    </div>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section class="section" id="s6">
+    <div class="sec-head">
+      <div class="sec-num">06</div>
+      <div>
+        <div class="sec-kicker">Post-training Paradigm</div>
+        <h2 class="sec-title">Specialist <em>×</em> On-Policy Distillation</h2>
+      </div>
+    </div>
+    <p>V4 最大的方法论转变：<strong>用 OPD 代替混合 RL</strong>。</p>
+
+    <div class="flow">
+      <span class="node fill">Base Model</span>
+      <div class="arrow">SFT 领域高质量数据</div>
+      <span class="node">GRPO RL · 数学 / 编程 / agent / 指令跟随 · 各一个 expert</span>
+      <div class="arrow">On-Policy Distillation 多教师 reverse-KL</div>
+      <span class="node fill">Unified Final Model</span>
+    </div>
+
+    <ul>
+      <li>真 · on-policy，不会蒸馏偏移</li>
+      <li>避免传统 RL merge 多任务时互相干扰</li>
+      <li>训练过程共享 KV cache、批量推理，大幅节省算力</li>
+    </ul>
+
+    <h3>Generative Reward Model · GRM</h3>
+    <p>V4 彻底抛弃<strong>标量 reward model</strong>，让 actor 网络自己充当 GRM——rubric-guided 数据、直接对 GRM 做 RL、评估与生成<strong>联合训练</strong>。人标数据用量大幅下降。</p>
+
+    <h3>三档思考强度</h3>
+    <table class="data">
+      <thead><tr><th>模式</th><th style="text-align:left">典型场景</th><th style="text-align:left">格式</th></tr></thead>
+      <tbody>
+        <tr><td>Non-think</td><td style="text-align:left">日常问答 · 低风险决策</td><td style="text-align:left"><code>&lt;/think&gt;</code> summary（空 think）</td></tr>
+        <tr><td>Think High</td><td style="text-align:left">复杂问题 · 规划</td><td style="text-align:left"><code>&lt;think&gt;…&lt;/think&gt;</code> summary</td></tr>
+        <tr><td>Think Max</td><td style="text-align:left">推理边界探索</td><td style="text-align:left">系统 prompt 前置专门指令 + think</td></tr>
+      </tbody>
+    </table>
+
+    <div class="pull">Absolute maximum with no shortcuts permitted. You MUST be very thorough in your thinking…</div>
+
+    <h3>更多后训练细节</h3>
+    <ul>
+      <li><strong>Tool-Call · XML + |DSML| 特殊 token</strong>：替代 JSON，降低转义错误率，与 think 配合。</li>
+      <li><strong>Interleaved Thinking</strong>：工具调用场景完整保留所有思考历史（跨用户消息边界）——1M 窗口真正能被 agent 利用的关键。</li>
+      <li><strong>Quick Instruction</strong>：搜索触发 / 意图识别等辅助任务用特殊 token 拼到末端，复用现有 KV cache 并行执行，降低 TTFT。</li>
+      <li><strong>WAL + 持久化 KV cache</strong>：rollout 被抢占后从断点恢复——"从头再生成会引入长度偏差"，短回复更易保留，不恢复会让模型被偏向输出短回复。</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 7 -->
+  <section class="section" id="s7">
+    <div class="sec-head">
+      <div class="sec-num">07</div>
+      <div>
+        <div class="sec-kicker">Benchmarks</div>
+        <h2 class="sec-title">一张表看清<em>它在哪</em></h2>
+      </div>
+    </div>
+
+    <h3>Base Model 对比</h3>
+    <table class="data">
+      <thead>
+        <tr><th>Benchmark</th><th>V3.2-Base (37B)</th><th>V4-Flash-Base (13B)</th><th>V4-Pro-Base (49B)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>MMLU-Pro</td><td>65.5</td><td>68.3</td><td><span class="best">73.5</span></td></tr>
+        <tr><td>Simple-QA Verified</td><td>28.3</td><td>30.1</td><td><span class="best">55.2</span></td></tr>
+        <tr><td>FACTS Parametric</td><td>27.1</td><td>33.9</td><td><span class="best">62.6</span></td></tr>
+        <tr><td>HumanEval</td><td>62.8</td><td>69.5</td><td><span class="best">76.8</span></td></tr>
+        <tr><td>MATH</td><td>60.5</td><td>57.4</td><td><span class="best">64.5</span></td></tr>
+        <tr><td>LongBench-V2</td><td>40.2</td><td>44.7</td><td><span class="best">51.5</span></td></tr>
+      </tbody>
+      <caption>Flash-Base 13B 激活已超越 V3.2-Base 37B 激活——相同能力 1/3 参数。</caption>
+    </table>
+
+    <h3>V4-Pro-Max vs 国际前沿</h3>
+    <table class="data">
+      <thead>
+        <tr><th>Benchmark</th><th>Opus-4.6</th><th>GPT-5.4</th><th>Gemini-3.1-Pro</th><th>V4-Pro-Max</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SimpleQA-Verified</td><td>46.2</td><td>45.3</td><td><span class="best">75.6</span></td><td><span class="ours">57.9</span></td></tr>
+        <tr><td>Chinese-SimpleQA</td><td>76.4</td><td>76.8</td><td><span class="best">85.9</span></td><td><span class="ours">84.4</span></td></tr>
+        <tr><td>LiveCodeBench</td><td>88.8</td><td>—</td><td>91.7</td><td><span class="best">93.5</span></td></tr>
+        <tr><td>Codeforces Rating</td><td>—</td><td>3168</td><td>3052</td><td><span class="best">3206</span></td></tr>
+        <tr><td>HMMT 2026 Feb</td><td>96.2</td><td><span class="best">97.7</span></td><td>94.7</td><td>95.2</td></tr>
+        <tr><td>IMO Answer Bench</td><td>75.3</td><td><span class="best">91.4</span></td><td>81.0</td><td>89.8</td></tr>
+        <tr><td>Apex Shortlist</td><td>85.9</td><td>78.1</td><td>89.1</td><td><span class="best">90.2</span></td></tr>
+        <tr><td>MRCR 1M</td><td><span class="best">92.9</span></td><td>—</td><td>76.3</td><td>83.5</td></tr>
+        <tr><td>CorpusQA 1M</td><td><span class="best">71.7</span></td><td>—</td><td>53.8</td><td>62.0</td></tr>
+        <tr><td>SWE Verified</td><td><span class="best">80.8</span></td><td>—</td><td>80.6</td><td>80.6</td></tr>
+        <tr><td>Terminal Bench 2.0</td><td>65.4</td><td><span class="best">75.1</span></td><td>68.5</td><td>67.9</td></tr>
+      </tbody>
+      <caption>绿色 = 本行最高  · 金色 = V4-Pro-Max 得分</caption>
+    </table>
+
+    <div class="note-grid">
+      <div class="note accent" data-tag="开源之王"><h5>开源 SOTA</h5><p>SimpleQA-Verified、LiveCodeBench、Codeforces、Apex Shortlist 均为开源最强。Codeforces 3206 ≈ 人类选手第 23 位。</p></div>
+      <div class="note" data-tag="差距"><h5>差距在哪</h5><p>SimpleQA-Verified 落后 Gemini-3.1-Pro ~18 pts——<strong>知识广度</strong>是差距所在，而不是推理。</p></div>
+      <div class="note" data-tag="长文本"><h5>长文本</h5><p>MRCR / CorpusQA 胜 Gemini-3.1-Pro，败 Claude Opus 4.6。</p></div>
+      <div class="note" data-tag="Math"><h5>数学</h5><p><strong>Putnam-2025 formal reasoning：120/120 满分</strong>，与 Axiom 并列第一。</p></div>
+    </div>
+
+    <h3>落地型评测</h3>
+    <ul>
+      <li><strong>中文写作</strong>：对 Gemini-3.1-Pro 常规写作胜率 62.7%，创意写作胜率 77.5%。</li>
+      <li><strong>白领任务</strong>（13 行业 30 任务人类盲评）：对 Opus-4.6-Max 非败率 <strong>63%</strong>。</li>
+      <li><strong>R&amp;D 编码</strong>（内部 30 真实任务）：V4-Pro-Max 67% · Opus 4.5 Thinking 73% · Opus 4.6 Thinking <strong>80%</strong>。</li>
+      <li><strong>内部 85 人调研</strong>：<span style="color:var(--accent);font-weight:500">52%</span> 工程师愿把 V4-Pro 作为日常主力编程模型，另 39% 倾向是，&lt;9% 反对。</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 8 -->
+  <section class="section" id="s8">
+    <div class="sec-head">
+      <div class="sec-num">08</div>
+      <div>
+        <div class="sec-kicker">Four Deep Takeaways</div>
+        <h2 class="sec-title">四个<em>深层判断</em></h2>
+      </div>
+    </div>
+
+    <h3>① 从"参数效率"到"系统效率"</h3>
+    <p>V3 的关键词是 <strong>参数激活量</strong>（MoE + MLA）；V4 的关键词是 <strong>上下文能效</strong>——每 token 的 KV 体积 / FLOPs。长 CoT / 长工具轨迹 / 长文档分析把计算从"参数侧"推向了"序列侧"，V4 是对这个转变的正面回应。</p>
+
+    <h3>② 与前沿闭源的差距仍在 3-6 个月，但性质变了</h3>
+    <p>在<strong>硬推理（HMMT、IMO、Codeforces、LiveCodeBench）</strong>，V4-Pro-Max 与 Gemini-3.1-Pro、GPT-5.4 <strong>基本持平甚至领先</strong>；在<strong>知识类（SimpleQA、MMLU-Pro）</strong>仍有较大差距。</p>
+    <div class="pull">差距不再是"推理能力"问题，而是"数据规模 × 知识广度"问题</div>
+
+    <h3>③ On-Policy Distillation 可能是新主流</h3>
+    <p>分别训 specialist → student 在自己 trajectory 上学 teacher 分布的 reverse KL → 配合 GRM / batch-invariant kernel / 异步 teacher scheduling——这是一套<strong>标准化、可规模化</strong>的后训练流水线。</p>
+
+    <h3>④ DeepSeek 的"基建叙事"同样重要</h3>
+    <p>报告第 3 章与第 5.2 节占了近 20 页——TileLang DSL / FP4 QAT / 3FS / DSec / Tensor-level checkpointing——几乎就是"头部基础模型公司这套 stack 都要有"的全景示范。架构创新需要这些工程能力才能跑在 10 万卡 × 万亿参数 × 百万 token 上。</p>
+  </section>
+
+  <!-- SECTION 9 -->
+  <section class="section" id="s9">
+    <div class="sec-head">
+      <div class="sec-num">09</div>
+      <div>
+        <div class="sec-kicker">Limitations</div>
+        <h2 class="sec-title">作者<em>自陈</em>的短板</h2>
+      </div>
+    </div>
+    <ol style="max-width:780px;padding-left:28px;line-height:1.9">
+      <li><strong>架构复杂度偏高</strong>：为降风险保留了大量"已验证但非最小必要"组件，未来做 principled distillation 简化。</li>
+      <li><strong>Anticipatory Routing / SwiGLU Clamping 的理论机理待解</strong>。</li>
+      <li><strong>Agent 能力短板</strong>：Terminal Bench 输给 GPT-5.4；R&D 编码落后 Opus 4.6 Thinking（80% vs 67%）。</li>
+      <li><strong>多模态缺席</strong>：V4 仍是纯文本，明确"正在做"。</li>
+      <li><strong>更稀疏 embedding</strong>（conditional memory via scalable lookup）、<strong>更低延迟架构</strong> 是下一步探索。</li>
+    </ol>
+  </section>
+
+  <!-- SECTION 10 -->
+  <section class="section" id="s10">
+    <div class="sec-head">
+      <div class="sec-num">10</div>
+      <div>
+        <div class="sec-kicker">For Practitioners</div>
+        <h2 class="sec-title">给从业者的<em>五条启示</em></h2>
+      </div>
+    </div>
+
+    <div class="note-grid">
+      <div class="note" data-tag="Research"><h5>架构研究者</h5><p>mHC（流形约束 + Sinkhorn-Knopp）是非常优雅的 residual 升级。CSA + HCA 的混合思路比单纯 MoBA/NSA 更系统，分层混合策略值得借鉴。</p></div>
+      <div class="note" data-tag="Product"><h5>长上下文产品团队</h5><p>异构 KV cache + on-disk storage 让多轮对话、agent 共享 system prompt、IDE 类工具成本降一个数量级。</p></div>
+      <div class="note" data-tag="Post-train"><h5>后训练工程师</h5><p>Specialist → OPD 流水线解决"多能力合并变弱"问题，对 RL 超参不敏感。GRM 进一步降低 reward engineering 成本。</p></div>
+      <div class="note warn" data-tag="Stability"><h5>训练稳定性</h5><p>训 MoE 遇 loss spike？Anticipatory Routing 是可插拔急救包（仅 spike 激活），SwiGLU Clamping 近乎零成本。</p></div>
+      <div class="note accent" data-tag="Open-source"><h5>开源生态</h5><p>V4-Flash（284B / 13B 激活）是"可落地推理"的甜点，配 FP8 存储 + 磁盘 KV cache，部署成本明显低于 V3。</p></div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<!-- APPENDIX -->
+<section class="appendix">
+  <h2>附 · <em>关键数字</em>速查表</h2>
+  <table class="big-table">
+    <tbody>
+      <tr><td>V4-Pro 参数</td><td>1.6T total · 49B act · 61 layers · 7168 hidden</td></tr>
+      <tr><td>V4-Flash 参数</td><td>284B total · 13B act · 43 layers · 4096 hidden</td></tr>
+      <tr><td>预训练数据</td><td>32T+ tokens</td></tr>
+      <tr><td>原生上下文</td><td><span class="hl">1,000,000 tokens</span></td></tr>
+      <tr><td>词表大小</td><td>128K</td></tr>
+      <tr><td>CSA 压缩率 m</td><td>4</td></tr>
+      <tr><td>HCA 压缩率 m′</td><td>128</td></tr>
+      <tr><td>CSA top-k</td><td>512 (Flash) · 1024 (Pro)</td></tr>
+      <tr><td>Sliding window 大小</td><td>128</td></tr>
+      <tr><td>Sinkhorn-Knopp 迭代</td><td>20</td></tr>
+      <tr><td>Newton-Schulz 迭代</td><td>10 (8 aggressive + 2 conservative)</td></tr>
+      <tr><td>mHC 扩展因子</td><td>4</td></tr>
+      <tr><td>Expert 总数</td><td>256 (Flash) · 384 (Pro)</td></tr>
+      <tr><td>激活 experts / token</td><td>6</td></tr>
+      <tr><td>Hash routing 层数</td><td>前 3 层</td></tr>
+      <tr><td>训练 batch peak</td><td>75.5M · 94.4M tokens</td></tr>
+      <tr><td>峰值学习率</td><td>2.7e-4 · 2.0e-4</td></tr>
+      <tr><td>Muon momentum</td><td>0.95</td></tr>
+      <tr><td>Weight decay</td><td>0.1</td></tr>
+      <tr><td>1M 单 token FLOPs vs V3.2</td><td><span class="hl">27% (Pro) · 10% (Flash)</span></td></tr>
+      <tr><td>1M KV cache vs V3.2</td><td><span class="hl">10% (Pro) · 7% (Flash)</span></td></tr>
+      <tr><td>KV cache vs BF16 GQA8 baseline</td><td>~2%</td></tr>
+      <tr><td>EP 理论加速</td><td>1.92×</td></tr>
+      <tr><td>Codeforces rating</td><td>3206（人类排名 ≈ 23）</td></tr>
+      <tr><td>Putnam-2025 formal</td><td><span class="hl">120/120 满分</span></td></tr>
+      <tr><td>工程师愿作主力编程模型</td><td>52% yes · 39% 倾向 yes · &lt;9% 反对</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-mark">开源不只是放<em>权重</em>，<br/>而是放出整条<em>可复制路径</em>。</div>
+    <div class="foot-meta">
+      <b>DOSSIER · № 04</b><br/>
+      DeepSeek-V4 Deep Dive<br/>
+      Chinese Edition · 2026<br/>
+      <br/>
+      Source: official preview (58p)<br/>
+      Analysis: ~16k characters<br/>
+    </div>
+    <div class="foot-meta">
+      <b>TYPOGRAPHY</b><br/>
+      Fraunces · Display<br/>
+      JetBrains Mono · Data<br/>
+      Noto Sans SC · Body<br/>
+      <br/>
+      <b>END OF DOSSIER</b>
+    </div>
+  </div>
+</footer>
+
+<script>
+// smooth scroll + active section highlight in nav
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', e=>{
+    const id=a.getAttribute('href');
+    if(id.length>1){e.preventDefault();document.querySelector(id)?.scrollIntoView({behavior:'smooth',block:'start'})}
+  })
+});
+
+// simple intersection observer for section fade-in
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){e.target.style.opacity=1;e.target.style.transform='translateY(0)'}
+  })
+},{threshold:.08});
+document.querySelectorAll('.section,.stat,.note').forEach(el=>{
+  el.style.opacity=0;el.style.transform='translateY(24px)';
+  el.style.transition='opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1)';
+  io.observe(el);
+});
+</script>
+</body>
+</html>
