@@ -38,7 +38,7 @@ export default function About() {
             >
               {isEN
                 ? "Founder of Pitchless AI · Serial Entrepreneur · Mother of Three · Marathon Runner · AGI Villa Initiator (3,000+ AI Entrepreneur Community)"
-                : "Pitchless AI创始人 · 连续创业者 · 三宝妈 · 马拉松跑者 · AGI Villa 发起人（3,000+ AI 创业者社区）"}
+                : "Pitchless AI创始人 · 连续创业者 · 三宝妈 · 马拉松跑者 · GO SUMMIT发起人 · AGI Villa 发起人（3,000+ AI 创业者）"}
             </p>
           </div>
         </div>
@@ -82,8 +82,8 @@ export default function About() {
                     </p>
                     <p className="fade-up stagger-1 text-[var(--color-ink-light)] leading-relaxed">
                       {isEN
-                        ? "Today, as the initiator of AGI Villa, she is dedicated to building bridges for Chinese enterprises going global — helping Chinese entrepreneurs navigate international expansion while helping the world understand China's tech landscape."
-                        : "如今，作为 AGI Villa 的发起人，她致力于为中国企业走向世界搭建桥梁——帮助中国创业者驾驭国际扩张，同时帮助世界理解中国的科技版图。"}
+                        ? "Today, as the initiator of GO SUMMIT and AGI Villa, she is committed to building bridges that connect the world with Chinese technology enterprises."
+                        : "如今，作为 GO SUMMIT 和 AGI Villa 的发起人，她致力于为世界搭建和中国科技企业链接的桥梁。"}
                     </p>
                   </div>
                 </div>
