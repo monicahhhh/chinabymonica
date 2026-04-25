@@ -37,8 +37,8 @@ export default function About() {
               style={{ fontFamily: "var(--font-body)" }}
             >
               {isEN
-                ? "Serial Entrepreneur · Mother of Three · Marathon Runner · AGI Villa Initiator (3,000+ AI Entrepreneur Community)"
-                : "连续创业者 · 三宝妈 · 马拉松跑者 · AGI Villa 发起人（3,000+ AI 创业者社区）"}
+                ? "Founder of Pitchless AI · Serial Entrepreneur · Mother of Three · Marathon Runner · AGI Villa Initiator (3,000+ AI Entrepreneur Community)"
+                : "Pitchless AI创始人 · 连续创业者 · 三宝妈 · 马拉松跑者 · AGI Villa 发起人（3,000+ AI 创业者社区）"}
             </p>
           </div>
         </div>
