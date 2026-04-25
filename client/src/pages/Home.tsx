@@ -228,7 +228,7 @@ function AboutPreviewSection({ isEN, localePath }: { isEN: boolean; localePath: 
               >
                 {isEN
                   ? "Serial Entrepreneur · Mother of Three · Marathon Runner · AGI Villa Initiator (3,000+ AI Entrepreneur Community)"
-                  : "连续创业者 · 三宝妈 · 马拉松跑者 · AGI Villa 发起人（3,000+ AI 创业者社区）"}
+                  : "Pitchless AI创始人 · 连续创业者 · 三宝妈 · 马拉松跑者 · AGI Villa 发起人（3,000+ AI 创业者社区）"}
               </p>
               <p className="fade-up stagger-2 text-[var(--color-ink-light)] leading-relaxed mb-4">
                 {isEN
