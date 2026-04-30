@@ -310,8 +310,8 @@ export default function About() {
                     { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-002_b1d00778.png", label: "TikTok", link: "https://www.tiktok.com/@chinabymonica" },
                     { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-004_df7acb16.png", label: "LinkedIn", link: "https://www.linkedin.com/in/chinabymonica" },
                     { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-wechat-new2_be983b3c.png", label: "WeChat", link: undefined as string | undefined },
-                    { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-001_d78255b8.png", label: "视频号 (Video Channel)", link: undefined as string | undefined },
-                    { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-gongzhonghao_b608c1f3.jpg", label: "公众号 (Official Account)", link: undefined as string | undefined },
+                    { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-001_d78255b8.png", label: "Wechat Video Channel", link: undefined as string | undefined },
+                    { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-gongzhonghao_b608c1f3.jpg", label: "Wechat Official Account", link: undefined as string | undefined },
                   ]
                 : [
                     { src: "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/qr-wechat-new2_be983b3c.png", label: "微信", link: undefined as string | undefined },

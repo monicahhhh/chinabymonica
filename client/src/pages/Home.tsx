@@ -124,8 +124,8 @@ function StayConnectedSection({ isEN }: { isEN: boolean }) {
         { src: QR_TIKTOK, label: "TikTok", link: "https://www.tiktok.com/@chinabymonica" },
         { src: QR_LINKEDIN, label: "LinkedIn", link: "https://www.linkedin.com/in/chinabymonica" },
         { src: QR_WECHAT, label: "WeChat", link: undefined },
-        { src: QR_VIDEO_CHANNEL, label: "Video Channel", link: undefined },
-        { src: QR_GONGZHONGHAO, label: "Official Account", link: undefined },
+        { src: QR_VIDEO_CHANNEL, label: "Wechat Video Channel", link: undefined },
+        { src: QR_GONGZHONGHAO, label: "Wechat Official Account", link: undefined },
       ]
     : [
         { src: QR_WECHAT, label: "微信", link: undefined },
