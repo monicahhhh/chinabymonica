@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -46,14 +46,6 @@ export default function EmailCaptureGate() {
     !isAdminPath &&
     !statusQuery.data?.hasCompleted;
   const open = needsEmail && !dismissed;
-
-  const helperText = useMemo(
-    () =>
-      isEN
-        ? "You can close this for now, but we will ask again next time until an email is submitted."
-        : "你可以先关闭，但下次打开网站仍会再次提示，直到提交邮箱为止。",
-    [isEN],
-  );
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -110,10 +102,8 @@ export default function EmailCaptureGate() {
             </span>
           </label>
 
-          {errorText ? (
+          {errorText && (
             <p className="text-sm text-destructive">{errorText}</p>
-          ) : (
-            <p className="text-xs text-[var(--color-ink-muted)]">{helperText}</p>
           )}
 
           <div className="flex items-center justify-end gap-2">
