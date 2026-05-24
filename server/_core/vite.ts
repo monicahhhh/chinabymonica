@@ -4,14 +4,25 @@ import { type Server } from "http";
 import { nanoid } from "nanoid";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createServer as createViteServer } from "vite";
-import viteConfig from "../../vite.config";
 
-// Polyfill for Node < 21 which lacks import.meta.dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/** Client build output (works for source `server/_core` and bundled `dist/index.js`). */
+export function getClientDistPath(): string {
+  const here = __dirname;
+  if (path.basename(here) === "dist") {
+    return path.join(here, "public");
+  }
+  return path.resolve(here, "../..", "dist", "public");
+}
+
 export async function setupVite(app: Express, server: Server) {
+  // Dynamic imports keep Vite + plugins out of the production startup path.
+  // Railway (and similar) install production deps only; static imports would 502 on boot.
+  const { createServer: createViteServer } = await import("vite");
+  const { default: viteConfig } = await import("../../vite.config");
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -37,7 +48,6 @@ export async function setupVite(app: Express, server: Server) {
         "index.html"
       );
 
-      // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
@@ -53,10 +63,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath =
-    process.env.NODE_ENV === "development"
-      ? path.resolve(__dirname, "../..", "dist", "public")
-      : path.resolve(__dirname, "public");
+  const distPath = getClientDistPath();
   if (!fs.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
@@ -65,7 +72,6 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });

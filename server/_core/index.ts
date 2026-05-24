@@ -60,14 +60,16 @@ async function startServer() {
   // Production: platforms (Railway, etc.) require the exact PORT they inject.
   // Development: always scan for a free port — Vite/dotenv may set PORT=3000 while another
   // process (or a tsx-watch restart) still holds 3000, which would skip findAvailablePort and fail.
+  // Railway always sets PORT; use it whenever present so a mis-set NODE_ENV cannot 502.
   const envPortRaw = process.env.PORT;
   const isProd = process.env.NODE_ENV === "production";
   let port: number;
-  if (isProd && envPortRaw) {
+  if (envPortRaw) {
     port = parseInt(envPortRaw, 10);
+  } else if (isProd) {
+    port = 3000;
   } else {
-    const preferred = envPortRaw ? parseInt(envPortRaw, 10) : 3000;
-    const start = Number.isFinite(preferred) && preferred > 0 ? preferred : 3000;
+    const start = 3000;
     port = await findAvailablePort(start);
     if (port !== start) {
       console.log(`Port ${start} was busy, using port ${port} instead`);

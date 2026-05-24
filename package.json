@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "NODE_OPTIONS=--experimental-global-webcrypto NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/crypto-shim.ts --platform=node --bundle --format=esm --outfile=dist/crypto-shim.js && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "vite build && esbuild server/_core/crypto-shim.ts --platform=node --bundle --format=esm --outfile=dist/crypto-shim.js && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --define:process.env.NODE_ENV=\\\"production\\\" --outdir=dist",
     "start": "NODE_OPTIONS=--experimental-global-webcrypto NODE_ENV=production node --import ./dist/crypto-shim.js dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
