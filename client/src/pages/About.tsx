@@ -39,16 +39,16 @@ export default function About() {
               {isEN
                 ? (
                   <>
-                    Founder of Pitchless AI · Serial Entrepreneur · Mother of Three · Marathon Runner
+                    Founder of AGI Villa ( 3,000+ AI&Tech Entrepreneurs)
                     <br />
-                    GO SUMMIT Initiator · AGI Villa Initiator (3,000+ AI Entrepreneurs)
+                    Serial Entrepreneur · 60+ Countries · Mother of Three · Marathon Runner
                   </>
                 )
                 : (
                   <>
-                    Pitchless AI创始人 · 连续创业者 · 三宝妈 · 马拉松跑者
+                    AGI Villa 创始人（3,000+ AI&Tech 创业者）
                     <br />
-                    GO SUMMIT发起人 · AGI Villa 发起人（3,000+ AI 创业者）
+                    连续创业者 · 60+ 国家 · 三宝妈 · 马拉松跑者
                   </>
                 )}
             </p>
