@@ -244,8 +244,8 @@ function AboutPreviewSection({ isEN, localePath }: { isEN: boolean; localePath: 
               </p>
               <p className="fade-up stagger-2 text-[var(--color-ink-light)] leading-relaxed mb-4">
                 {isEN
-                  ? "Serial entrepreneur, former journalist at Xinhua News Agency, and initiator of AGI Villa. Over 15 years, Monica has visited 50 countries, served as CEO and CMO of unicorn companies in AI programming, youth education, Web3, local lifestyle, and social e-commerce — raising over 1.5 billion RMB from Sequoia Capital, Linear Venture, Legend Capital, and Sinovation Ventures."
-                  : "记者出身，15年间走访50国，是科技出海的深度观察者和连接者。曾任AI编程、青少年教育、Web3、本地生活、社交电商独角兽CEO/CMO，创业项目累计融资超15亿元（红杉/线性/君联/创新工场等）。"}
+                  ? "Serial entrepreneur, former journalist at Xinhua News Agency, and initiator of AGI Villa. Over 15 years, Monica has visited 60 countries, served as CEO and CMO of unicorn companies in AI programming, youth education, Web3, local lifestyle, and social e-commerce — raising over 1.5 billion RMB from Sequoia Capital, Linear Venture, Legend Capital, and Sinovation Ventures."
+                  : "记者出身，15年间走访60国，是科技出海的深度观察者和连接者。曾任AI编程、青少年教育、Web3、本地生活、社交电商独角兽CEO/CMO，创业项目累计融资超15亿元（红杉/线性/君联/创新工场等）。"}
               </p>
               <p className="fade-up stagger-3 text-[var(--color-ink-light)] leading-relaxed mb-6">
                 {isEN
@@ -446,7 +446,7 @@ export default function Home() {
               className="fade-up text-xl lg:text-2xl leading-relaxed text-[var(--color-ink)] drop-cap"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              For too long, the stories of Chinese entrepreneurs have been filtered through secondhand narratives. ChinabyMonica exists to change that — offering firsthand perspectives from someone who has spent 15 years traversing 50 countries, building companies, and connecting ecosystems across borders.
+              For too long, the stories of Chinese entrepreneurs have been filtered through secondhand narratives. ChinabyMonica exists to change that — offering firsthand perspectives from someone who has spent 15 years traversing 60 countries, building companies, and connecting ecosystems across borders.
             </p>
             <hr className="editorial-rule mt-8 fade-up" />
           </div>
