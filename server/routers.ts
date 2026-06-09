@@ -14,6 +14,7 @@ import {
   upsertUser,
   upsertEmailLead,
   hasEmailLead,
+  listEmailLeads,
   getDb,
 } from "./db";
 import { storagePut } from "./storage";
@@ -322,6 +323,12 @@ IMPORTANT RULES:
         const { url } = await storagePut(key, buffer, contentType);
         return { url };
       }),
+  }),
+
+  emailLead: router({
+    listAll: adminProcedure.query(async () => {
+      return listEmailLeads();
+    }),
   }),
 
   article: router({

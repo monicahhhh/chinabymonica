@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import {
   Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Star, ArrowLeft, LogOut,
-  X, ImageIcon, Languages, Save, FileText, Sparkles, Calendar,
+  X, ImageIcon, Languages, Save, FileText, Sparkles, Calendar, Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -847,6 +847,11 @@ export default function AdminArticles() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" asChild>
+              <Link href="/admin/emails">
+                <Mail className="mr-2 h-4 w-4" /> 邮箱列表
+              </Link>
+            </Button>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="mr-2 h-4 w-4" /> 新建文章
             </Button>

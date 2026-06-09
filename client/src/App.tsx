@@ -12,6 +12,7 @@ import Connect from "./pages/Connect";
 import DeepSeekV4 from "./pages/DeepSeekV4";
 import ArticleDetail from "./pages/ArticleDetail";
 import AdminArticles from "./pages/AdminArticles";
+import AdminEmailLeads from "./pages/AdminEmailLeads";
 import AdminLogin from "./pages/AdminLogin";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -49,6 +50,7 @@ function Router() {
       {/* Admin routes */}
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/articles" component={AdminArticles} />
+      <Route path="/admin/emails" component={AdminEmailLeads} />
 
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

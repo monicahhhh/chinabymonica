@@ -102,15 +102,7 @@ export async function upsertEmailLead(input: {
     );
   }
 
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS email_leads (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      email VARCHAR(320) NOT NULL UNIQUE,
-      subscribeNewsletter BOOLEAN NOT NULL DEFAULT FALSE,
-      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
-  `);
+  await ensureEmailLeadsTable(db);
 
   await db.execute(sql`
     INSERT INTO email_leads (email, subscribeNewsletter)
@@ -121,10 +113,15 @@ export async function upsertEmailLead(input: {
   `);
 }
 
-export async function hasEmailLead(email: string): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
+export type EmailLead = {
+  id: number;
+  email: string;
+  subscribeNewsletter: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
+async function ensureEmailLeadsTable(db: NonNullable<Awaited<ReturnType<typeof getDb>>>) {
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS email_leads (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -134,8 +131,31 @@ export async function hasEmailLead(email: string): Promise<boolean> {
       updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
   `);
+}
 
-  const rows = await db.execute(sql`
+export async function listEmailLeads(): Promise<EmailLead[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  await ensureEmailLeadsTable(db);
+
+  const [rows] = await db.execute(sql`
+    SELECT id, email, subscribeNewsletter, createdAt, updatedAt
+    FROM email_leads
+    ORDER BY createdAt DESC
+  `);
+
+  if (!Array.isArray(rows)) return [];
+  return rows as EmailLead[];
+}
+
+export async function hasEmailLead(email: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await ensureEmailLeadsTable(db);
+
+  const [rows] = await db.execute(sql`
     SELECT id FROM email_leads WHERE email = ${email} LIMIT 1
   `);
   return Array.isArray(rows) && rows.length > 0;
