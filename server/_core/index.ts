@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { getMediaFile } from "../storage";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,29 @@ async function startServer() {
     res.status(200).json({ ok: true });
   app.get("/api/health", healthHandler);
   app.get("/health", healthHandler);
+
+  // Serve images stored in MySQL when S3 is not configured
+  app.get("/api/media/:encodedKey", async (req, res) => {
+    try {
+      const key = decodeURIComponent(req.params.encodedKey);
+      if (!key || key.includes("..")) {
+        res.status(400).end("Bad request");
+        return;
+      }
+      const file = await getMediaFile(key);
+      if (!file) {
+        res.status(404).end("Not found");
+        return;
+      }
+      res.setHeader("Content-Type", file.contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.send(file.data);
+    } catch (err) {
+      console.error("[media] serve failed:", err);
+      res.status(500).end("Internal error");
+    }
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
