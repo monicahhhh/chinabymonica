@@ -94,8 +94,8 @@ export default function About() {
                     </p>
                     <p className="fade-up stagger-1 text-[var(--color-ink-light)] leading-relaxed">
                       {isEN
-                        ? "Today, as the founder of AGI Villa and GO SUMMIT, she is committed to building bridges that connect the world with Chinese technology enterprises."
-                        : "如今，作为 AGI Villa 和 GO SUMMIT 的创始人，她致力于为世界搭建和中国科技企业链接的桥梁。"}
+                        ? "Today, as the founder of AGI Villa and BridgingChina, she is committed to building bridges that connect the world with Chinese technology enterprises."
+                        : "如今，作为 AGI Villa 和 BridgingChina 的创始人，她致力于为世界搭建和中国科技企业链接的桥梁。"}
                     </p>
                   </div>
                 </div>
