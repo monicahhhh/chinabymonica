@@ -229,14 +229,14 @@ function AboutPreviewSection({ isEN, localePath }: { isEN: boolean; localePath: 
                 {isEN
                   ? (
                     <>
-                      Founder of AGI Villa ( 3,000+ AI&Tech Entrepreneurs)
+                      Founder of AGI Villa & BridgingChina ( 3,000+ AI&Tech Entrepreneurs)
                       <br />
                       Serial Entrepreneur · 60+ Countries · Mother of Three · Marathon Runner
                     </>
                   )
                   : (
                     <>
-                      AGI Villa 创始人（3,000+ AI&Tech 创业者）
+                      AGI Villa & BridgingChina 创始人（3,000+ AI&Tech 创业者）
                       <br />
                       连续创业者 · 60+ 国家 · 三宝妈 · 马拉松跑者
                     </>

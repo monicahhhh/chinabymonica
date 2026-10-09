@@ -9,8 +9,6 @@ import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Menu, X } from "lucide-react";
 
-const DISCORD_URL = "https://discord.gg/wYE2DDjazA";
-
 export default function Navbar() {
   const { lang, localePath } = useLanguage();
   const [location] = useLocation();
@@ -112,18 +110,6 @@ export default function Navbar() {
                   </span>
                 </Link>
               ))}
-              <a
-                href={DISCORD_URL}
-                target="_blank"
-                rel="noreferrer"
-                className={`text-sm tracking-wide transition-colors duration-200 hover:text-[var(--color-terracotta)] ${
-                  isTransparent ? "text-white/80" : "text-[var(--color-ink-light)]"
-                }`}
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                Discord
-              </a>
-
               {/* Language toggle — navigates to the other language version */}
               <Link href={getLangSwitchHref()}>
                 <span
@@ -171,15 +157,6 @@ export default function Navbar() {
                   </span>
                 </Link>
               ))}
-              <a
-                href={DISCORD_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="text-2xl text-[var(--color-ink)]"
-                style={{ fontFamily: isEN ? "var(--font-display)" : "var(--font-serif-cn)" }}
-              >
-                Discord
-              </a>
               <hr className="editorial-rule my-2" />
               <Link href={getLangSwitchHref()}>
                 <span

@@ -6,7 +6,7 @@
 关于 Monica
 
 ### 副标题
-AGI Villa 创始人（3,000+ AI&Tech 创业者）
+AGI Villa & BridgingChina 创始人（3,000+ AI&Tech 创业者）
 连续创业者 · 60+ 国家 · 三宝妈 · 马拉松跑者
 
 ### 科技出海的深度观察者与连接者
