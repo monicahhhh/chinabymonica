@@ -110,6 +110,36 @@ export type ResponseFormat =
   | { type: "json_object" }
   | { type: "json_schema"; json_schema: JsonSchema };
 
+type LlmConfig = {
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+};
+
+/** Resolve OpenAI-compatible chat endpoint. Prefer OPENAI_*, then AI_GATEWAY_*. */
+export function resolveLlmConfig(): LlmConfig | null {
+  if (ENV.openaiApiKey) {
+    return {
+      apiKey: ENV.openaiApiKey,
+      baseUrl: (ENV.openaiBaseUrl || "https://api.openai.com/v1").replace(/\/+$/, ""),
+      model: ENV.llmModel || "gpt-4o-mini",
+    };
+  }
+
+  if (ENV.aiGatewayApiKey) {
+    return {
+      apiKey: ENV.aiGatewayApiKey,
+      baseUrl: (ENV.aiGatewayBaseUrl || "https://ai-gateway.happycapy.ai/api/v1").replace(
+        /\/+$/,
+        "",
+      ),
+      model: ENV.llmModel || ENV.aiGatewayModel || "anthropic/claude-sonnet-4-6",
+    };
+  }
+
+  return null;
+}
+
 const ensureArray = (
   value: MessageContent | MessageContent[]
 ): MessageContent[] => (Array.isArray(value) ? value : [value]);
@@ -209,14 +239,6 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () => "https://ai-gateway.happycapy.ai/api/v1/chat/completions";
-
-const assertApiKey = () => {
-  if (!ENV.aiGatewayApiKey) {
-    throw new Error("AI_GATEWAY_API_KEY is not configured");
-  }
-};
-
 const normalizeResponseFormat = ({
   responseFormat,
   response_format,
@@ -263,7 +285,12 @@ const normalizeResponseFormat = ({
 };
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+  const config = resolveLlmConfig();
+  if (!config) {
+    throw new Error(
+      "LLM API key is not configured. Set OPENAI_API_KEY (recommended) or AI_GATEWAY_API_KEY in Railway Variables.",
+    );
+  }
 
   const {
     messages,
@@ -277,7 +304,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    model: "anthropic/claude-sonnet-4-6",
+    model: config.model,
     messages: messages.map(normalizeMessage),
   };
 
@@ -306,11 +333,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.aiGatewayApiKey}`,
+      authorization: `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify(payload),
   });

@@ -20,9 +20,10 @@ import {
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { normalizeArticleHtml } from "./lib/normalizeArticleHtml";
-import { invokeLLM } from "./_core/llm";
+import { invokeLLM, resolveLlmConfig } from "./_core/llm";
 import { ENV } from "./_core/env";
 import { sdk } from "./_core/sdk";
+import { translateHtmlFallback } from "./lib/translateHtml";
 
 const articleInput = z.object({
   slug: z.string().min(1).max(256),
@@ -232,26 +233,44 @@ IMPORTANT RULES:
 - Keep proper nouns and brand names in their original form or use commonly accepted Chinese translations
 - Do NOT add any explanation or commentary — output ONLY the translated HTML`;
 
-        const result = await invokeLLM({
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content },
-          ],
-          maxTokens: 16384,
-        });
+        const tryLlm = async (): Promise<string | null> => {
+          if (!resolveLlmConfig()) return null;
+          try {
+            const result = await invokeLLM({
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content },
+              ],
+              maxTokens: 16384,
+            });
 
-        const translated = typeof result.choices[0]?.message?.content === "string"
-          ? result.choices[0].message.content
-          : "";
+            const translated = typeof result.choices[0]?.message?.content === "string"
+              ? result.choices[0].message.content
+              : "";
 
-        // Clean up: remove markdown code fences if LLM wrapped the output
-        const cleaned = translated
-          .replace(/^```html\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/\s*```$/i, "")
-          .trim();
+            return translated
+              .replace(/^```html\s*/i, "")
+              .replace(/^```\s*/i, "")
+              .replace(/\s*```$/i, "")
+              .trim();
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            // Disabled / invalid Manus HappyCapy keys should fall back silently
+            if (/403|401|disabled|not configured|API [Kk]ey/i.test(msg)) {
+              console.warn("[translate] LLM unavailable, using fallback:", msg);
+              return null;
+            }
+            throw err;
+          }
+        };
 
-        return { translated: cleaned };
+        const llmTranslated = await tryLlm();
+        if (llmTranslated) {
+          return { translated: llmTranslated };
+        }
+
+        const fallback = await translateHtmlFallback(content, direction);
+        return { translated: fallback };
       }),
   }),
 
