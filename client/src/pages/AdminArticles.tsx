@@ -57,6 +57,19 @@ const emptyForm: ArticleFormData = {
   publishedAt: "",
 };
 
+/** Build a URL-safe slug from English title; fall back when title is Chinese-only. */
+function buildSlug(titleEN: string, titleZH = ""): string {
+  const fromEn = titleEN
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (fromEn.length >= 1) return fromEn;
+
+  return `article-${Date.now().toString(36)}`;
+}
+
 /* ===== Cover Image Upload ===== */
 function CoverImageUpload({
   value,
@@ -241,16 +254,21 @@ function ArticleForm({
     draft.markDirty();
   };
 
-  // Auto-generate slug from English title
+  // Auto-generate slug from English title (falls back if EN is empty / non-Latin)
   const generateSlug = () => {
-    const slug = form.titleEN
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
-    updateField("slug", slug);
+    updateField("slug", buildSlug(form.titleEN, form.titleZH));
   };
+
+  // Keep slug in sync while creating: fill when empty and English title changes
+  useEffect(() => {
+    if (draftKey !== "new") return;
+    if (form.slug.trim()) return;
+    if (!form.titleEN.trim() && !form.titleZH.trim()) return;
+    setForm((prev) => {
+      if (prev.slug.trim()) return prev;
+      return { ...prev, slug: buildSlug(prev.titleEN, prev.titleZH) };
+    });
+  }, [draftKey, form.titleEN, form.titleZH, form.slug]);
 
   // Upload image to S3 via tRPC
   const handleImageUpload = useCallback(
@@ -389,7 +407,37 @@ function ArticleForm({
 
   // Handle form submit with draft cleanup
   const handleSubmit = async () => {
-    const success = await onSubmit(form);
+    const payload: ArticleFormData = {
+      ...form,
+      slug: form.slug.trim() || buildSlug(form.titleEN, form.titleZH),
+    };
+
+    if (!payload.titleZH.trim()) {
+      toast.error("请填写中文标题");
+      return;
+    }
+    if (!payload.titleEN.trim()) {
+      toast.error("请填写英文标题（可先用「中文 -> EN」翻译）");
+      return;
+    }
+    if (!payload.contentZH.trim()) {
+      toast.error("请填写中文内容");
+      return;
+    }
+    if (!payload.contentEN.trim()) {
+      toast.error("请填写英文内容（可先用「中文 -> EN」翻译）");
+      return;
+    }
+    if (!payload.slug.trim()) {
+      toast.error("请填写 URLSlug，或点击 Auto 自动生成");
+      return;
+    }
+
+    if (payload.slug !== form.slug) {
+      setForm(payload);
+    }
+
+    const success = await onSubmit(payload);
     if (success) {
       draft.clearDraft();
     }
@@ -463,6 +511,7 @@ function ArticleForm({
               Auto
             </Button>
           </div>
+          <p className="text-xs text-gray-400">文章链接用，如未填写保存时会自动生成</p>
         </div>
         <div className="space-y-2">
           <Label>分类 *</Label>
@@ -708,10 +757,23 @@ export default function AdminArticles() {
     );
   }
 
+  const formatMutationError = (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/slug|too_small/i.test(message) && /path.*slug|\"slug\"/i.test(message)) {
+      return "URL Slug 不能为空，请填写或点击 Auto 生成";
+    }
+    if (/titleEN/i.test(message)) return "请填写英文标题";
+    if (/titleZH/i.test(message)) return "请填写中文标题";
+    if (/contentEN/i.test(message)) return "请填写英文内容";
+    if (/contentZH/i.test(message)) return "请填写中文内容";
+    return message;
+  };
+
   const handleCreate = async (data: ArticleFormData): Promise<boolean> => {
     try {
       await createMutation.mutateAsync({
         ...data,
+        slug: data.slug.trim() || buildSlug(data.titleEN, data.titleZH),
         subtitleZH: data.subtitleZH || null,
         subtitleEN: data.subtitleEN || null,
         coverImage: data.coverImage || null,
@@ -722,7 +784,7 @@ export default function AdminArticles() {
       utils.article.listAll.invalidate();
       return true;
     } catch (err) {
-      toast.error("创建失败：" + (err as Error).message);
+      toast.error("创建失败：" + formatMutationError(err));
       return false;
     }
   };
