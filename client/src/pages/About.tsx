@@ -4,7 +4,7 @@
  */
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import { ArrowRight, Video, Radio, Instagram } from "lucide-react";
+import { ArrowRight, Video, Radio, Linkedin } from "lucide-react";
 import { Link } from "wouter";
 
 const MONICA_PHOTO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/monica-photo_cc742672.jpg";
@@ -441,17 +441,17 @@ export default function About() {
             </h2>
             <p className="fade-up stagger-1 text-[var(--color-ink-muted)] leading-relaxed mb-6">
               {isEN
-                ? "For business inquiries, media requests, or collaboration proposals, connect with Monica through her social channels or send a direct message on Instagram."
-                : "商务咨询、媒体邀约或合作提案，请通过社交媒体渠道联系Monica，或在Instagram上发送私信。"}
+                ? "For business inquiries, media requests, or collaboration proposals, connect with Monica through her social channels or send a message on LinkedIn."
+                : "商务咨询、媒体邀约或合作提案，请通过社交媒体渠道联系Monica，或在LinkedIn上发送私信。"}
             </p>
             <a
-              href="https://www.instagram.com/chinabymonica"
+              href="https://www.linkedin.com/in/chinabymonica"
               target="_blank"
               rel="noopener noreferrer"
               className="fade-up stagger-2 inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-terracotta)] text-white text-sm tracking-wide hover:bg-[var(--color-terracotta-light)] transition-colors duration-300"
             >
-              <Instagram size={16} />
-              {isEN ? "Message on Instagram" : "Instagram 私信联系"}
+              <Linkedin size={16} />
+              {isEN ? "Message on LinkedIn" : "LinkedIn 私信联系"}
             </a>
           </div>
         </div>
