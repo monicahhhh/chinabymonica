@@ -89,8 +89,8 @@ export default function About() {
                   <div className="space-y-4">
                     <p className="fade-up text-[var(--color-ink-light)] leading-relaxed">
                       {isEN
-                        ? "Monica began her career as a journalist at Xinhua News Agency, where she developed profound business insights and sharp industry acumen. Over the past 15 years, she has visited more than 60 countries, accumulating rich cross-cultural communication experience and a broad international perspective. She has organized and hosted dozens of influential international forums, including the Asia-Pacific New Energy Industry Summit, the Trans-Pacific Shipping Summit, the Singapore Biopharmaceutical Development Forum, and the Davos Financial Forum. These experiences have made her a true deep observer and connector in tech going global."
-                        : "记者出身的 Monica 曾在新华通讯社从事新闻工作，这段经历赋予了她深刻的商业见解和敏锐的行业洞察力。在过去的 15 年间，她走访了全球 60 个国家，积累了丰富的跨文化交流经验和广阔的国际视野。她曾作为主理人策划并主持了亚太新能源行业峰会、跨太平洋海运峰会、新加坡生物医药发展论坛、达沃斯财经论坛等数十个具有行业影响力的国际论坛。这些经历使她成为了名副其实的科技出海深度观察者与连接者。"}
+                        ? "Monica began her career as a journalist at Xinhua News Agency, where she developed profound business insights and sharp industry acumen. Over the past 20 years, she has visited more than 60 countries, accumulating rich cross-cultural communication experience and a broad international perspective. She has organized and hosted dozens of influential international forums, including the Asia-Pacific New Energy Industry Summit, the Trans-Pacific Shipping Summit, the Singapore Biopharmaceutical Development Forum, and the Davos Financial Forum. These experiences have made her a true deep observer and connector in tech going global."
+                        : "记者出身的 Monica 曾在新华通讯社从事新闻工作，这段经历赋予了她深刻的商业见解和敏锐的行业洞察力。在过去的 20 年间，她走访了全球 60 个国家，积累了丰富的跨文化交流经验和广阔的国际视野。她曾作为主理人策划并主持了亚太新能源行业峰会、跨太平洋海运峰会、新加坡生物医药发展论坛、达沃斯财经论坛等数十个具有行业影响力的国际论坛。这些经历使她成为了名副其实的科技出海深度观察者与连接者。"}
                     </p>
                     <p className="fade-up stagger-1 text-[var(--color-ink-light)] leading-relaxed">
                       {isEN
