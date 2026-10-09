@@ -401,16 +401,16 @@ export default function About() {
                 <ul className="space-y-2">
                   {(isEN
                     ? [
+                        "Going-Global Consulting & Advisory",
                         "Founder Global IP Building",
-                        "Startup Mentorship & Advisory",
                         "Going-Global Growth & Market Expansion",
                         "Community-Driven Product Incubation",
                         "OPC (One-Person Company) Capability Foundation",
                         "Events & Livestreams on Going-Global / Entrepreneurship / AI",
                       ]
                     : [
-                        "创始人全球 IP 建设",
-                        "创业指导与顾问",
+                        "出海咨询与顾问",
+                        "创始人全球IP建设",
                         "出海增长与市场拓展",
                         "社区驱动的产品孵化",
                         "OPC（一人公司）能力底座",
