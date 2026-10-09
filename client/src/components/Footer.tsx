@@ -96,8 +96,8 @@ export default function Footer() {
               </div>
               <p className="text-xs text-[var(--color-ink-muted)]">
                 {isEN
-                  ? "Weekly Wednesday Live Stream"
-                  : "每周三直播「出海×AI×创业」"}
+                  ? "Weekly Live Stream"
+                  : "每周直播「出海×AI×创业」"}
               </p>
               <p className="text-xs text-[var(--color-ink-muted)]">
                 {isEN

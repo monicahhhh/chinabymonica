@@ -271,12 +271,12 @@ export default function About() {
                   className="text-2xl lg:text-3xl font-bold mb-4"
                   style={{ fontFamily: isEN ? "var(--font-display)" : "var(--font-serif-cn)", color: "white" }}
                 >
-                  {isEN ? "Every Wednesday" : "每周三直播"}
+                  {isEN ? "Every Week" : "每周直播"}
                 </h2>
                 <p className="text-white/70 leading-relaxed mb-6 max-w-xl">
                   {isEN
-                    ? "Every Wednesday, Monica goes live to discuss the latest in globalization, AI, and entrepreneurship. Real stories, real insights, real conversations."
-                    : "每周三，Monica在视频号「Monica出海说」直播，深度分享出海×AI×创业话题。真实故事、真实洞察、真实对话。"}
+                    ? "Every week, Monica goes live to discuss the latest in globalization, AI, and entrepreneurship. Real stories, real insights, real conversations."
+                    : "每周，Monica在视频号「Monica出海说」直播，深度分享出海×AI×创业话题。真实故事、真实洞察、真实对话。"}
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white/90 text-sm">

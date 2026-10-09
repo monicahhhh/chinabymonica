@@ -176,8 +176,8 @@ export default function Insights() {
               </h2>
               <p className="fade-up stagger-1 text-[var(--color-ink-muted)] leading-relaxed">
                 {isEN
-                  ? "Monica is currently working on in-depth articles and analysis. Follow her on social media for the latest updates and weekly live streams every Wednesday."
-                  : "Monica正在撰写深度文章和分析。关注她的社交媒体获取最新动态，每周三在视频号「Monica出海说」直播。"}
+                  ? "Monica is currently working on in-depth articles and analysis. Follow her on social media for the latest updates and weekly live streams."
+                  : "Monica正在撰写深度文章和分析。关注她的社交媒体获取最新动态，每周在视频号「Monica出海说」直播。"}
               </p>
             </div>
           </div>

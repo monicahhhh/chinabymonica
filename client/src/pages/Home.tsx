@@ -250,7 +250,7 @@ function AboutPreviewSection({ isEN, localePath }: { isEN: boolean; localePath: 
               <p className="fade-up stagger-3 text-[var(--color-ink-light)] leading-relaxed mb-6">
                 {isEN
                   ? "A mother of three, marathon runner, and deep observer of tech globalization — Monica bridges the gap between China's innovation ecosystem and the rest of the world."
-                  : "每周三「出海×AI×创业」直播（视频号：Monica出海说），致力于连接中国创新生态与世界。"}
+                  : "每周「出海×AI×创业」直播（视频号：Monica出海说），致力于连接中国创新生态与世界。"}
               </p>
               <Link href={localePath("/about")}>
                 <span className="fade-up stagger-4 inline-flex items-center gap-2 text-[var(--color-terracotta)] text-sm font-medium hover:gap-3 transition-all duration-300">
