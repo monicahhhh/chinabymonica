@@ -7,7 +7,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { ArrowRight, Video, Radio, Linkedin } from "lucide-react";
 import { Link } from "wouter";
 
-const MONICA_PHOTO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/monica-photo_cc742672.jpg";
+const MONICA_PHOTO = "/images/monica-photo.jpg";
 
 export default function About() {
   const { lang, localePath } = useLanguage();

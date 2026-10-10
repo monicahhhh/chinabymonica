@@ -8,4 +8,4 @@
 - pattern-texture: https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/pattern-texture-fZih8t77Kr5uZWGgPBSTBV.webp
 
 ## Uploaded Images
-- monica-photo: https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/monica-photo_cc742672.jpg
+- monica-photo: /images/monica-photo.jpg

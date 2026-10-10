@@ -10,7 +10,7 @@ import { ArrowRight, Globe, Lightbulb, Users } from "lucide-react";
 import { Link } from "wouter";
 
 const HERO_EN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/hero-en-C27JECFmTmMMGYA9GuYP8y.webp";
-const MONICA_PHOTO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/monica-photo_cc742672.jpg";
+const MONICA_PHOTO = "/images/monica-photo.jpg";
 const BLOG_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663505942366/duFsqgJ3sLuqSVf7ShnPai/blog-placeholder-gvyXKEAnHN7R9Pye7ZSrTM.webp";
 
 /* ===== Shared section components ===== */
